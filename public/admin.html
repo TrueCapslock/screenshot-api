@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin &mdash; Screenshot API</title>
+<style>
+  :root { --bg: #111; --card-bg: #1a1a1a; --text: #e0e0e0; --text-secondary: #999; --text-muted: #666; --border: #333; --border-light: #2a2a2a; --input-bg: #222; --code-bg: #222; --btn-secondary-bg: #333; --btn-secondary-text: #e0e0e0; --btn-secondary-hover: #444; --primary: #0066ff; --primary-hover: #0052cc; --danger: #dc3545; --success: #28a745; --shadow: rgba(0,0,0,0.3); }
+  [data-theme="light"] { --bg: #f5f5f5; --card-bg: #fff; --text: #333; --text-secondary: #666; --text-muted: #999; --border: #ddd; --border-light: #eee; --input-bg: #fff; --code-bg: #f0f0f0; --btn-secondary-bg: #e8e8e8; --btn-secondary-text: #333; --btn-secondary-hover: #d4d4d4; --shadow: rgba(0,0,0,0.08); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  h1 { font-size: 22px; }
+  h2 { font-size: 18px; margin-bottom: 12px; }
+  .card { background: var(--card-bg); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px var(--shadow); }
+  .btn { display: inline-block; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
+  .btn-secondary:hover { background: var(--btn-secondary-hover); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  input, select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--input-bg); color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-light); }
+  th { color: var(--text-secondary); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-free { background: #2a2a2a; color: #aaa; }
+  .badge-starter { background: #1a3a2a; color: #8bc99b; }
+  .badge-pro { background: #1a2a3a; color: #8bb8f0; }
+  .badge-business { background: #3a1a1a; color: #f0a0a0; }
+  .subscribed { color: var(--success); }
+  .empty { color: var(--text-muted); font-style: italic; padding: 20px 0; text-align: center; }
+  .flex { display: flex; gap: 8px; align-items: center; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: var(--card-bg); border-radius: 8px; padding: 24px; min-width: 360px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+  .modal h3 { margin-bottom: 16px; }
+  .modal .field { margin-bottom: 12px; }
+  .modal .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+  .modal .field input, .modal .field select { width: 100%; }
+  .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .hidden { display: none; }
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; color: #fff; font-weight: 500; opacity: 0; transition: opacity 0.3s; z-index: 200; }
+  .toast.show { opacity: 1; }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
+  .theme-toggle { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 16px; cursor: pointer; color: var(--text); line-height: 1; }
+  a { color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Admin Panel</h1>
+    <div class="flex">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">&#127769;</button>
+      <a href="/docs" class="btn btn-secondary btn-sm">Dashboard</a>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div id="loginCard" class="card">
+    <h2>Admin Login</h2>
+    <p style="margin-bottom:12px;color:var(--text-secondary);font-size:14px;">Enter your admin API key.</p>
+    <div class="flex">
+      <input type="text" id="adminKey" placeholder="sk_..." style="font-family:monospace;flex:1;">
+      <button class="btn btn-primary" onclick="login()">Login</button>
+    </div>
+  </div>
+
+  <div id="adminContent" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Users</h2>
+        <button class="btn btn-secondary btn-sm" onclick="loadUsers()">&#8635; Refresh</button>
+      </div>
+      <div id="usersTableWrapper">
+        <div class="empty" id="usersLoading">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="userModal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modalTitle">User Details</h3>
+    <div id="modalBody"></div>
+    <div class="actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = window.location.origin;
+let apiKey = localStorage.getItem('adminKey');
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers['x-api-key'] = apiKey;
+  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  return res;
+}
+
+function login() {
+  const key = document.getElementById('adminKey').value.trim();
+  if (!key) return showToast('Enter your API key', 'error');
+  apiKey = key;
+  localStorage.setItem('adminKey', apiKey);
+  enterAdmin();
+}
+
+function logout() {
+  apiKey = null;
+  localStorage.removeItem('adminKey');
+  document.getElementById('adminContent').classList.add('hidden');
+  document.getElementById('loginCard').classList.remove('hidden');
+  document.getElementById('adminKey').value = '';
+}
+
+async function enterAdmin() {
+  const res = await api('/v1/account');
+  if (!res.ok) {
+    apiKey = null;
+    localStorage.removeItem('adminKey');
+    return showToast('Invalid key', 'error');
+  }
+  const data = await res.json();
+  if (!data.user.is_admin) {
+    apiKey = null;
+    localStorage.removeItem('adminKey');
+    return showToast('Not an admin account', 'error');
+  }
+  document.getElementById('loginCard').classList.add('hidden');
+  document.getElementById('adminContent').classList.remove('hidden');
+  loadUsers();
+}
+
+async function loadUsers() {
+  const wrapper = document.getElementById('usersTableWrapper');
+  wrapper.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const res = await api('/v1/admin/users');
+    if (!res.ok) { wrapper.innerHTML = '<div class="empty">Failed to load users</div>'; return; }
+    const data = await res.json();
+    if (!data.users || data.users.length === 0) {
+      wrapper.innerHTML = '<div class="empty">No users found</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>Email</th><th>Name</th><th>Tier</th><th>Sub</th><th>API Usage</th><th>Screenshots</th><th>Keys</th><th>Created</th><th></th></tr></thead><tbody>';
+    data.users.forEach(u => {
+      const date = new Date(u.created_at).toLocaleDateString();
+      const sub = u.stripe_subscription_id ? '<span class="subscribed">&#10003;</span>' : '&mdash;';
+      html += '<tr>' +
+        '<td>' + esc(u.email) + (u.email === (localStorage.getItem('adminEmail') || '') ? ' <span style="font-size:11px;color:var(--primary);">(you)</span>' : '') + '</td>' +
+        '<td>' + esc(u.name || '&mdash;') + '</td>' +
+        '<td><span class="badge badge-' + u.tier + '">' + u.tier + '</span></td>' +
+        '<td>' + sub + '</td>' +
+        '<td>' + u.api_usage + '</td>' +
+        '<td>' + u.screenshots + '</td>' +
+        '<td>' + u.api_keys + '</td>' +
+        '<td>' + date + '</td>' +
+        '<td><button class="btn btn-secondary btn-sm" onclick="viewUser(\'' + u.id + '\')">Manage</button></td>' +
+      '</tr>';
+    });
+    html += '</tbody></table>';
+    wrapper.innerHTML = html;
+  } catch (e) {
+    wrapper.innerHTML = '<div class="empty">Network error</div>';
+  }
+}
+
+async function viewUser(id) {
+  const overlay = document.getElementById('userModal');
+  const body = document.getElementById('modalBody');
+  const title = document.getElementById('modalTitle');
+  title.textContent = 'Loading...';
+  overlay.classList.remove('hidden');
+  body.innerHTML = '<p style="color:var(--text-muted);">Loading...</p>';
+  try {
+    const res = await api('/v1/admin/users/' + id);
+    if (!res.ok) { body.innerHTML = '<p style="color:var(--danger);">Failed to load</p>'; return; }
+    const data = await res.json();
+    const u = data.user;
+    title.textContent = esc(u.email);
+    body.innerHTML = `
+      <div style="margin-bottom:16px;">
+        <div class="field">
+          <label>Email</label>
+          <input type="text" value="${esc(u.email)}" disabled>
+        </div>
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="editName" value="${esc(u.name || '')}">
+        </div>
+        <div class="field">
+          <label>Tier</label>
+          <select id="editTier">
+            <option value="free" ${u.tier === 'free' ? 'selected' : ''}>Free</option>
+            <option value="starter" ${u.tier === 'starter' ? 'selected' : ''}>Starter</option>
+            <option value="pro" ${u.tier === 'pro' ? 'selected' : ''}>Pro</option>
+            <option value="business" ${u.tier === 'business' ? 'selected' : ''}>Business</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>API Usage (30d)</label>
+          <input type="text" value="${u.api_usage}" disabled>
+        </div>
+        <div class="field">
+          <label>Screenshots</label>
+          <input type="text" value="${u.screenshots}" disabled>
+        </div>
+        <div class="field">
+          <label>Subscription</label>
+          <input type="text" value="${u.stripe_subscription_id || 'None'}" disabled>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary btn-sm" onclick="saveUser('${u.id}')">Save Changes</button>
+        <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this user and all their data?'))deleteUser('${u.id}')">Delete User</button>
+      </div>
+    `;
+  } catch {
+    body.innerHTML = '<p style="color:var(--danger);">Network error</p>';
+  }
+}
+
+async function saveUser(id) {
+  const name = document.getElementById('editName').value;
+  const tier = document.getElementById('editTier').value;
+  try {
+    const res = await api('/v1/admin/users/' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, tier }),
+    });
+    if (res.ok) {
+      showToast('User updated', 'success');
+      closeModal();
+      loadUsers();
+    } else {
+      const data = await res.json();
+      showToast(data.message || 'Update failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+}
+
+async function deleteUser(id) {
+  try {
+    const res = await api('/v1/admin/users/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('User deleted', 'success');
+      closeModal();
+      loadUsers();
+    } else {
+      showToast('Delete failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+}
+
+function closeModal() {
+  document.getElementById('userModal').classList.add('hidden');
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, ''); }
+
+function applyTheme(theme) {
+  const root = document.getElementById('htmlRoot');
+  const btn = document.getElementById('themeBtn');
+  root.setAttribute('data-theme', theme);
+  btn.textContent = theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  localStorage.setItem('adminTheme', theme);
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('adminTheme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+(function init() {
+  const stored = localStorage.getItem('adminTheme');
+  if (stored) applyTheme(stored);
+  else if (window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
+  if (apiKey) enterAdmin();
+})();
+</script>
+</body>
+</html>

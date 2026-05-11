@@ -1,0 +1,45 @@
+import 'dotenv/config';
+
+export default {
+  port: parseInt(process.env.PORT || '3000', 10),
+  baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+  env: process.env.NODE_ENV || 'development',
+
+  db: {
+    url: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/screenshot_api',
+  },
+
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+  },
+
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    prices: {
+      starter: process.env.STRIPE_STARTER_PRICE_ID || '',
+      pro: process.env.STRIPE_PRO_PRICE_ID || '',
+      business: process.env.STRIPE_BUSINESS_PRICE_ID || '',
+    },
+  },
+
+  storage: {
+    endpoint: process.env.STORAGE_ENDPOINT || '',
+    region: process.env.STORAGE_REGION || '',
+    bucket: process.env.STORAGE_BUCKET || '',
+    accessKey: process.env.STORAGE_ACCESS_KEY || '',
+    secretKey: process.env.STORAGE_SECRET_KEY || '',
+    localDir: process.env.LOCAL_STORAGE_DIR || './screenshots',
+  },
+
+  adminEmail: process.env.ADMIN_EMAIL || '',
+
+  screenshotRetentionHours: parseInt(process.env.SCREENSHOT_RETENTION_HOURS || '1', 10),
+
+  tiers: {
+    free: { monthlyLimit: 25, rateLimit: 10, windowMs: 60_000 },
+    starter: { monthlyLimit: 1000, rateLimit: 60, windowMs: 60_000 },
+    pro: { monthlyLimit: 5000, rateLimit: 250, windowMs: 60_000 },
+    business: { monthlyLimit: 25000, rateLimit: 1000, windowMs: 60_000 },
+  },
+};

@@ -1,0 +1,375 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Screenshot API",
+    "version": "1.0.0",
+    "description": "Take screenshots of any URL or render HTML to images via a simple REST API."
+  },
+  "servers": [{ "url": "http://localhost:3000", "description": "Local development" }],
+  "security": [{ "ApiKeyAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Your API key (sk_...)"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "ScreenshotOptions": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "format": "uri", "maxLength": 2048, "description": "URL to screenshot" },
+          "width": { "type": "integer", "minimum": 1, "maximum": 7680, "default": 1280 },
+          "height": { "type": "integer", "minimum": 1, "maximum": 7680, "default": 720 },
+          "format": { "type": "string", "enum": ["png", "jpeg", "webp"], "default": "png" },
+          "quality": { "type": "integer", "minimum": 1, "maximum": 100, "description": "JPEG/WebP quality" },
+          "fullPage": { "type": "boolean", "default": true, "description": "Capture full scrollable page" },
+          "delay": { "type": "integer", "minimum": 0, "maximum": 60000, "description": "Delay before capture (ms)" },
+          "selector": { "type": "string", "maxLength": 512, "description": "CSS selector to capture specific element" },
+          "blockAds": { "type": "boolean", "description": "Block ad/tracker domains" },
+          "darkMode": { "type": "boolean", "description": "Emulate dark color scheme" },
+          "mobile": { "type": "boolean", "description": "Emulate mobile viewport (390x844)" },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120,
+            "default": 30,
+            "description": "Timeout in seconds"
+          },
+          "waitUntil": {
+            "type": "string",
+            "enum": ["load", "domcontentloaded", "networkidle"],
+            "default": "networkidle"
+          },
+          "waitForSelector": { "type": "string", "maxLength": 512 },
+          "scrollToBottom": { "type": "boolean" },
+          "acceptCookies": {
+            "oneOf": [{ "type": "boolean" }, { "type": "string", "maxLength": 512 }],
+            "description": "Boolean to auto-accept cookies, or a CSS selector string to click a specific element"
+          }
+        }
+      },
+      "ScreenshotResponse": {
+        "type": "string",
+        "format": "binary",
+        "description": "The screenshot image binary"
+      },
+      "ApiKey": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "key_prefix": { "type": "string" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" },
+          "last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateKeyRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "description": "A label for the API key" }
+        }
+      },
+      "CreateKeyResponse": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string", "description": "The full API key (shown once)" },
+          "prefix": { "type": "string" },
+          "name": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "Account": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "email": { "type": "string" },
+              "name": { "type": "string", "nullable": true },
+              "tier": { "type": "string" },
+              "stripe_subscription_id": { "type": "string", "nullable": true },
+              "created_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "usage": { "type": "integer", "description": "Screenshots in last 30 days" },
+          "keys": { "type": "array", "items": { "$ref": "#/components/schemas/ApiKey" } }
+        }
+      },
+      "SignupRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string" }
+        }
+      },
+      "SignupResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "email": { "type": "string" },
+              "tier": { "type": "string" }
+            }
+          },
+          "api_key": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "CheckoutRequest": {
+        "type": "object",
+        "required": ["priceId"],
+        "properties": {
+          "priceId": { "type": "string", "description": "Stripe price ID" },
+          "successUrl": { "type": "string", "format": "uri" },
+          "cancelUrl": { "type": "string", "format": "uri" }
+        }
+      },
+      "CheckoutResponse": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "session_id": { "type": "string" }
+        }
+      },
+      "AsyncScreenshotRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ScreenshotOptions" },
+          {
+            "type": "object",
+            "properties": {
+              "webhookUrl": {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 2048,
+                "description": "URL to POST result to"
+              }
+            }
+          }
+        ]
+      },
+      "AsyncScreenshotResponse": {
+        "type": "object",
+        "properties": {
+          "job_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "timestamp": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/signup": {
+      "post": {
+        "summary": "Create a new account",
+        "tags": ["Account"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SignupRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SignupResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/screenshot": {
+      "post": {
+        "summary": "Take a screenshot (synchronous)",
+        "tags": ["Screenshots"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScreenshotOptions" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Screenshot image",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              },
+              "image/jpeg": {
+                "schema": { "type": "string", "format": "binary" }
+              },
+              "image/webp": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            },
+            "headers": {
+              "X-Screenshot-Id": { "schema": { "type": "string" } },
+              "X-Duration-Ms": { "schema": { "type": "string" } }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "429": {
+            "description": "Rate limit or monthly limit exceeded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "502": {
+            "description": "Render failed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+    "/v1/html": {
+      "post": {
+        "summary": "Render HTML to an image",
+        "tags": ["Screenshots"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["html"],
+                "properties": {
+                  "html": { "type": "string", "description": "HTML content to render" },
+                  "width": { "type": "integer", "default": 1280 },
+                  "height": { "type": "integer", "default": 720 },
+                  "format": { "type": "string", "enum": ["png", "jpeg", "webp"], "default": "png" },
+                  "quality": { "type": "integer", "minimum": 1, "maximum": 100 },
+                  "fullPage": { "type": "boolean", "default": false },
+                  "delay": { "type": "integer", "maximum": 60000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rendered image",
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/screenshot/async": {
+      "post": {
+        "summary": "Take a screenshot (asynchronous with webhook)",
+        "tags": ["Screenshots"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AsyncScreenshotRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Job queued",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AsyncScreenshotResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/screenshot/{id}": {
+      "get": {
+        "summary": "Get async screenshot result",
+        "tags": ["Screenshots"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Job/screenshot ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screenshot image or status object",
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "job_id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    }
+  }
+}
