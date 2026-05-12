@@ -15,6 +15,7 @@ export async function auth(req, res, next) {
     .select(
       'api_keys.id',
       'api_keys.key_hash',
+      'api_keys.key_prefix',
       'api_keys.user_id',
       'users.tier',
       'users.stripe_subscription_id',
@@ -33,7 +34,7 @@ export async function auth(req, res, next) {
 
   await db('api_keys').where({ id: keyRow.id }).update({ last_used_at: db.fn.now() });
 
-  req.apiKey = { id: keyRow.id, userId: keyRow.user_id };
+  req.apiKey = { id: keyRow.id, userId: keyRow.user_id, keyPrefix: keyRow.key_prefix };
   req.tier = keyRow.tier;
   req.subscriptionId = keyRow.stripe_subscription_id;
   req.isAdmin = config.adminEmail && keyRow.email === config.adminEmail;

@@ -26,6 +26,7 @@ router.get('/account', async (req, res) => {
 
   res.json({
     user: { ...user, is_admin: req.isAdmin },
+    current_key_prefix: req.apiKey.keyPrefix,
     usage: parseInt((usage?.count || '0').toString(), 10),
     keys,
   });

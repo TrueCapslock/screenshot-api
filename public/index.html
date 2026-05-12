@@ -195,6 +195,7 @@
       <h2 data-i18n="account">Account</h2>
       <div id="adminLink" class="hidden" style="margin-bottom:8px;"><a href="/docs/admin" class="btn btn-secondary btn-sm">&#9878; Admin Panel</a></div>
       <div class="row"><span class="label" data-i18n="email">Email</span><span class="value" id="accEmail">-</span></div>
+      <div class="row"><span class="label" data-i18n="activeKey">Active Key</span><span class="value" id="accActiveKey" style="font-family:monospace;font-size:12px;">-</span></div>
       <div class="row"><span class="label" data-i18n="tier">Tier</span><span class="value" id="accTier">-</span></div>
       <div class="row"><span class="label" data-i18n="subscription">Subscription</span><span class="value" id="accSubscription">-</span></div>
       <div id="subStatus" style="margin-top:12px;"></div>
@@ -445,6 +446,7 @@ async function loadAccount() {
     userData = data;
 
     document.getElementById('accEmail').textContent = data.user.email || '-';
+    document.getElementById('accActiveKey').textContent = data.current_key_prefix + '...';
     document.getElementById('accTier').textContent = data.user.tier;
     document.getElementById('accUsage').textContent = data.usage;
     document.getElementById('adminLink').style.display = data.user.is_admin ? 'block' : 'none';
@@ -792,6 +794,7 @@ const LANG = {
     emailPlaceholder: 'you@example.com',
     namePlaceholder: 'Your name',
     account: 'Account',
+    activeKey: 'Active Key',
     tier: 'Tier',
     subscription: 'Subscription',
     usageDays: 'Usage (30 days)',
@@ -877,6 +880,7 @@ const LANG = {
     emailPlaceholder: 'deg@eksempel.no',
     namePlaceholder: 'Ditt navn',
     account: 'Konto',
+    activeKey: 'Aktiv nøkkel',
     tier: 'Nivå',
     subscription: 'Abonnement',
     usageDays: 'Bruk (30 dager)',
