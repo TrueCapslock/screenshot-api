@@ -397,6 +397,22 @@ async function sendMagicLink() {
   }
 }
 
+function enterDashboard() {
+  document.getElementById('authSection').classList.add('hidden');
+  document.getElementById('accountSection').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.remove('hidden');
+}
+
+function leaveDashboard() {
+  apiKey = null;
+  userData = null;
+  localStorage.removeItem('apiKey');
+  document.getElementById('accountSection').classList.add('hidden');
+  document.getElementById('authSection').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.add('hidden');
+  showSignup();
+}
+
 async function login() {
   const key = document.getElementById('loginKey').value.trim();
   if (!key) return showToast(t('enterKey'), 'error');
