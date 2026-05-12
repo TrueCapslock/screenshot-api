@@ -41,6 +41,8 @@ export default {
     from: process.env.SMTP_FROM || '',
   },
 
+  resendKey: process.env.RESEND_KEY || '',
+
   adminEmail: process.env.ADMIN_EMAIL || '',
 
   screenshotRetentionHours: parseInt(process.env.SCREENSHOT_RETENTION_HOURS || '1', 10),
