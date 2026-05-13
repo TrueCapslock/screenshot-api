@@ -220,15 +220,15 @@
           <h3 style="font-size:16px;margin-bottom:4px;">Free</h3>
           <div style="font-size:24px;font-weight:700;">$0</div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">25 <span data-i18n="screenshots">screenshots</span></div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;">10 <span data-i18n="reqMin">req/min</span></div>
+          <div style="font-size:13px;color:#666;">10 <span data-i18n="screenshots">screenshots</span></div>
+          <div style="font-size:13px;color:#666;margin-bottom:12px;">5 <span data-i18n="reqMin">req/min</span></div>
           <button class="btn btn-secondary btn-sm" disabled style="opacity:0.5;cursor:default;" data-i18n="current">Current</button>
         </div>
         <div class="plan-card" data-tier="starter" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
           <h3 style="font-size:16px;margin-bottom:4px;">Starter</h3>
           <div style="font-size:24px;font-weight:700;">$9</div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">1,000 <span data-i18n="screenshots">screenshots</span></div>
+          <div style="font-size:13px;color:#666;">500 <span data-i18n="screenshots">screenshots</span></div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;">60 <span data-i18n="reqMin">req/min</span></div>
           <button class="btn btn-primary btn-sm" onclick="subscribe('starter')" data-i18n="subscribe">Subscribe</button>
         </div>
@@ -237,7 +237,7 @@
           <h3 style="font-size:16px;margin-bottom:4px;">Pro</h3>
           <div style="font-size:24px;font-weight:700;">$29</div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">5,000 <span data-i18n="screenshots">screenshots</span></div>
+          <div style="font-size:13px;color:#666;">2,500 <span data-i18n="screenshots">screenshots</span></div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;">250 <span data-i18n="reqMin">req/min</span></div>
           <button class="btn btn-primary btn-sm" onclick="subscribe('pro')" data-i18n="subscribe">Subscribe</button>
         </div>
@@ -245,7 +245,7 @@
           <h3 style="font-size:16px;margin-bottom:4px;">Business</h3>
           <div style="font-size:24px;font-weight:700;">$99</div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">25,000 <span data-i18n="screenshots">screenshots</span></div>
+          <div style="font-size:13px;color:#666;">15,000 <span data-i18n="screenshots">screenshots</span></div>
           <div style="font-size:13px;color:#666;margin-bottom:12px;">1,000 <span data-i18n="reqMin">req/min</span></div>
           <button class="btn btn-primary btn-sm" onclick="subscribe('business')" data-i18n="subscribe">Subscribe</button>
         </div>
@@ -485,7 +485,7 @@ async function loadAccount() {
     document.getElementById('adminLink').style.display = data.user.is_admin ? 'block' : 'none';
 
     const tier = data.user.tier;
-    const limits = { free: 25, starter: 1000, pro: 5000, business: 25000 };
+    const limits = { free: 10, starter: 500, pro: 2500, business: 15000 };
     const limit = limits[tier] || 25;
     document.getElementById('accLimit').textContent = limit;
 

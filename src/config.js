@@ -48,9 +48,9 @@ export default {
   screenshotRetentionHours: parseInt(process.env.SCREENSHOT_RETENTION_HOURS || '1', 10),
 
   tiers: {
-    free: { monthlyLimit: 25, rateLimit: 10, windowMs: 60_000 },
-    starter: { monthlyLimit: 1000, rateLimit: 60, windowMs: 60_000 },
-    pro: { monthlyLimit: 5000, rateLimit: 250, windowMs: 60_000 },
-    business: { monthlyLimit: 25000, rateLimit: 1000, windowMs: 60_000 },
+    free: { monthlyLimit: 10, rateLimit: 5, windowMs: 60_000 },
+    starter: { monthlyLimit: 500, rateLimit: 60, windowMs: 60_000 },
+    pro: { monthlyLimit: 2500, rateLimit: 250, windowMs: 60_000 },
+    business: { monthlyLimit: 15000, rateLimit: 1000, windowMs: 60_000 },
   },
 };
