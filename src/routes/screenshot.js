@@ -33,6 +33,7 @@ const screenshotSchema = z.object({
   acceptCookies: z.union([z.boolean(), z.string().max(512)]).optional(),
   scale: z.number().int().min(1).max(3).optional(),
   cache: z.boolean().optional(),
+  baseline: z.boolean().optional(),
 });
 
 router.post('/screenshot', logUsage, async (req, res) => {
@@ -96,6 +97,7 @@ router.post('/screenshot', logUsage, async (req, res) => {
         storage_path: storagePath,
         bytes: result.buffer.length,
         status: 'completed',
+        is_baseline: options.baseline || false,
         completed_at: db.fn.now(),
       })
       .returning('id');
@@ -110,6 +112,7 @@ router.post('/screenshot', logUsage, async (req, res) => {
     res.set('X-Screenshot-Id', screenshot.id);
     res.set('X-Duration-Ms', String(result.durationMs));
     res.set('X-Cache', 'MISS');
+    if (options.baseline) res.set('X-Baseline', 'true');
     res.status(200).send(result.buffer);
   } catch (err) {
     console.error('Screenshot error:', err);
@@ -173,6 +176,21 @@ router.post('/html', logUsage, async (req, res) => {
       message: `Failed to render HTML: ${err.message}`,
     });
   }
+});
+
+router.post('/screenshot/:id/baseline', async (req, res) => {
+  const screenshot = await db('screenshots')
+    .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
+    .where({ 'screenshots.id': req.params.id, 'api_keys.user_id': req.apiKey.userId })
+    .select('screenshots.id')
+    .first();
+
+  if (!screenshot) {
+    return res.status(404).json({ error: 'not_found', message: 'Screenshot not found' });
+  }
+
+  await db('screenshots').where({ id: screenshot.id }).update({ is_baseline: true });
+  res.json({ message: 'Baseline set', id: screenshot.id });
 });
 
 export default router;

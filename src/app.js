@@ -38,6 +38,7 @@ const { default: keysRouter } = await import('./routes/keys.js');
 const { default: screenshotRouter } = await import('./routes/screenshot.js');
 const { default: asyncRouter } = await import('./routes/async.js');
 const { default: adminRouter } = await import('./routes/admin.js');
+const { default: compareRouter } = await import('./routes/compare.js');
 
 app.use(healthRouter);
 app.use('/v1', authRouter);
@@ -47,6 +48,7 @@ app.use('/v1', keysRouter);
 app.use('/v1', screenshotRouter);
 app.use('/v1', asyncRouter);
 app.use('/v1', adminRouter);
+app.use('/v1', compareRouter);
 
 app.use(errorHandler);
 

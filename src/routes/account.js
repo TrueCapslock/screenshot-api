@@ -42,6 +42,9 @@ router.get('/account/screenshots', async (req, res) => {
       'screenshots.format',
       'screenshots.bytes',
       'screenshots.status',
+      'screenshots.is_baseline',
+      'screenshots.baseline_id',
+      'screenshots.diff_percentage',
       'screenshots.created_at',
       'screenshots.completed_at',
     )

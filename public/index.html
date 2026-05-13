@@ -671,6 +671,39 @@ async function downloadScreenshot(id) {
   return false;
 }
 
+async function setBaseline(id) {
+  try {
+    const res = await api('/v1/screenshot/' + id + '/baseline', { method: 'POST' });
+    if (res.ok) {
+      showToast('Baseline set', 'success');
+      loadScreenshots();
+    } else {
+      const d = await res.json();
+      showToast(d.message || 'Failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+  return false;
+}
+
+async function viewDiff(id) {
+  try {
+    const res = await fetch(`${API}/v1/screenshot/${id}/diff`, {
+      headers: { 'x-api-key': apiKey },
+    });
+    if (!res.ok) { showToast('Diff not found', 'error'); return false; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const preview = document.getElementById('screenshotPreview');
+    preview.innerHTML = '<div style="margin-bottom:8px;"><a href="#" onclick="this.parentElement.parentElement.style.display=\'none\';this.parentElement.innerHTML=\'\';return false" class="btn btn-secondary btn-sm" data-i18n="closePreview">Close</a> <span style="font-size:13px;color:var(--text-secondary);">Diff image</span></div><img src="' + url + '" style="max-width:100%;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.2);">';
+    preview.style.display = 'block';
+  } catch {
+    showToast('Network error', 'error');
+  }
+  return false;
+}
+
 async function toggleScreenshots() {
   const list = document.getElementById('screenshotsList');
   const btn = document.getElementById('screenshotsToggle');
@@ -702,12 +735,25 @@ async function loadScreenshots() {
       const date = new Date(s.created_at).toLocaleString();
       const size = s.bytes ? (s.bytes / 1024).toFixed(1) + ' KB' : '-';
       const urlLabel = s.url === 'html://inline' ? 'HTML Render' : esc(s.url);
+      let badges = '';
+      if (s.is_baseline) badges += '<span style="font-size:11px;background:#1a3a2a;color:#8bc99b;padding:1px 6px;border-radius:4px;margin-left:4px;">BASELINE</span>';
+      if (s.diff_percentage !== null) badges += '<span style="font-size:11px;background:' + (s.diff_percentage > 0.1 ? '#3a1a1a;color:#f0a0a0' : '#1a2a3a;color:#8bb8f0') + ';padding:1px 6px;border-radius:4px;margin-left:4px;">' + s.diff_percentage + '% diff</span>';
+      let actions = '';
+      if (s.status === 'completed') {
+        actions = '<div style="display:flex;gap:4px;">';
+        actions += '<a href="#" onclick="return previewScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="viewScreenshot">View</a>';
+        actions += '<a href="#" onclick="return downloadScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="downloadScreenshot">Download</a>';
+        if (!s.is_baseline) actions += '<a href="#" onclick="return setBaseline(\'' + s.id + '\')" class="btn btn-secondary btn-sm" style="font-size:11px;">Set Baseline</a>';
+        if (s.diff_percentage !== null) actions += '<a href="#" onclick="return viewDiff(\'' + s.id + '\')" class="btn btn-secondary btn-sm" style="font-size:11px;">View Diff</a>';
+        actions += '</div>';
+      } else {
+        actions = '<span class="label">' + s.status + '</span>';
+      }
       return '<div class="screenshot-row">' +
         '<div class="screenshot-info">' +
-          '<div class="screenshot-url">' + urlLabel + '</div>' +
+          '<div class="screenshot-url">' + urlLabel + badges + '</div>' +
           '<div class="screenshot-meta">' + date + ' &middot; ' + s.format.toUpperCase() + ' &middot; ' + size + '</div>' +
-        '</div>' +
-        (s.status === 'completed' ? '<div style="display:flex;gap:4px;"><a href="#" onclick="return previewScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="viewScreenshot">View</a><a href="#" onclick="return downloadScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="downloadScreenshot">Download</a></div>' : '<span class="label">' + s.status + '</span>') +
+        '</div>' + actions +
       '</div>';
     }).join('');
     applyLanguage();
