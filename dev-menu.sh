@@ -200,44 +200,53 @@ docker_submenu() {
     echo -n "Select option: "
   }
 
-  _dmenu_lines=12
+  local _dmenu_lines=11
 
   while true; do
     _draw_docker_menu $selected
-    local key= arrow=
-    read -s -n1 key 2>/dev/null
-    if [[ "$key" == $'\e' ]]; then
-      read -s -n2 -t 0.1 arrow 2>/dev/null || true
-    fi
-    if [[ "$arrow" == '[A' ]]; then
-      ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
-    elif [[ "$arrow" == '[B' ]]; then
-      ((selected++)); [[ $selected -ge $items_len ]] && selected=0
-    elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
-      printf '\e[%dA\e[J' $_dmenu_lines; return
-    elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
-      printf '\e[%dA\e[J' $_dmenu_lines
-      case $selected in
-        0) echo "Logging into Docker Hub..."; docker login 2>&1 | sed 's/^/  /' ;;
-        1) echo "Building image..."; $DOCKER build -f docker/Dockerfile -t $IMAGE:latest -t $IMAGE:$APP_VERSION . 2>&1 | sed 's/^/  /' ;;
-        2) echo "Pushing image..."; $DOCKER push $IMAGE:latest 2>&1 | sed 's/^/  /' && $DOCKER push $IMAGE:$APP_VERSION 2>&1 | sed 's/^/  /' ;;
-        3) echo "Building image..."; $DOCKER build -f docker/Dockerfile -t $IMAGE:latest -t $IMAGE:$APP_VERSION . 2>&1 | sed 's/^/  /' && echo "" && echo "Pushing image..." && $DOCKER push $IMAGE:latest 2>&1 | sed 's/^/  /' && $DOCKER push $IMAGE:$APP_VERSION 2>&1 | sed 's/^/  /' ;;
-        4) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
-      esac
-      echo ""; read -s -n1 -p "Press any key to continue..."
-      continue
-    elif [[ "$key" =~ [0-9bB] ]]; then
-      case "$key" in
-        1) selected=0 ;;
-        2) selected=1 ;;
-        3) selected=2 ;;
-        4) selected=3 ;;
-        b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
-      esac
-      printf '\e[%dA\e[J' $_dmenu_lines
-      continue
-    fi
-    printf '\e[%dA\e[J' $_dmenu_lines
+
+    while true; do
+      local key= arrow=
+      read -s -n1 key 2>/dev/null
+      if [[ "$key" == $'\e' ]]; then
+        read -s -n2 -t 0.1 arrow 2>/dev/null || true
+      fi
+      if [[ "$arrow" == '[A' ]]; then
+        ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_docker_menu $selected
+        printf '\e[?25h'
+      elif [[ "$arrow" == '[B' ]]; then
+        ((selected++)); [[ $selected -ge $items_len ]] && selected=0
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_docker_menu $selected
+        printf '\e[?25h'
+      elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
+        printf '\e[%dA\e[J' $_dmenu_lines; return
+      elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
+        printf '\e[%dA\e[J' $_dmenu_lines
+        case $selected in
+          0) echo "Logging into Docker Hub..."; docker login 2>&1 | sed 's/^/  /' ;;
+          1) echo "Building image..."; $DOCKER build -f docker/Dockerfile -t $IMAGE:latest -t $IMAGE:$APP_VERSION . 2>&1 | sed 's/^/  /' ;;
+          2) echo "Pushing image..."; $DOCKER push $IMAGE:latest 2>&1 | sed 's/^/  /' && $DOCKER push $IMAGE:$APP_VERSION 2>&1 | sed 's/^/  /' ;;
+          3) echo "Building image..."; $DOCKER build -f docker/Dockerfile -t $IMAGE:latest -t $IMAGE:$APP_VERSION . 2>&1 | sed 's/^/  /' && echo "" && echo "Pushing image..." && $DOCKER push $IMAGE:latest 2>&1 | sed 's/^/  /' && $DOCKER push $IMAGE:$APP_VERSION 2>&1 | sed 's/^/  /' ;;
+          4) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
+        esac
+        echo ""; read -s -n1 -p "Press any key to continue..."
+        break
+      elif [[ "$key" =~ [0-9bB] ]]; then
+        case "$key" in
+          1) selected=0 ;;
+          2) selected=1 ;;
+          3) selected=2 ;;
+          4) selected=3 ;;
+          b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
+        esac
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_docker_menu $selected
+        printf '\e[?25h'
+      fi
+    done
   done
 }
 
@@ -279,7 +288,7 @@ dev_submenu() {
     echo -n "Select option: "
   }
 
-  _dmenu_lines=22
+  local _dmenu_lines=18
 
   _dev_run() {
     printf '\e[%dA\e[J' $_dmenu_lines
@@ -310,34 +319,40 @@ dev_submenu() {
     local docker_cmd="Start" docker_c="$G"; $docker_running && { docker_cmd="Stop"; docker_c="$R"; }
 
     _draw_dev_menu $selected
-    local key= arrow=
-    read -s -n1 key 2>/dev/null
-    if [[ "$key" == $'\e' ]]; then
-      read -s -n2 -t 0.1 arrow 2>/dev/null || true
-    fi
-    if [[ "$arrow" == '[A' ]]; then
-      ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
-    elif [[ "$arrow" == '[B' ]]; then
-      ((selected++)); [[ $selected -ge $items_len ]] && selected=0
-    elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
-      printf '\e[%dA\e[J' $_dmenu_lines; return
-    elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
-      case $selected in
-        9) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
-        *) _dev_run $selected ;;
-      esac
-      echo ""; read -s -n1 -p "Press any key to continue..."
-      continue
-    elif [[ "$key" =~ [0-8kKbB] ]]; then
-      case "$key" in
-        [0-8]) local n=$key; [[ $n -ge 1 ]] && _dev_run $((n - 1)) || _dev_run 0 ;;
-        k|K) _dev_run 8 ;;
-        b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
-      esac
-      echo ""; read -s -n1 -p "Press any key to continue..."
-      continue
-    fi
-    printf '\e[%dA\e[J' $_dmenu_lines
+
+    while true; do
+      local key= arrow=
+      read -s -n1 key 2>/dev/null
+      if [[ "$key" == $'\e' ]]; then
+        read -s -n2 -t 0.1 arrow 2>/dev/null || true
+      fi
+      if [[ "$arrow" == '[A' ]]; then
+        ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_dev_menu $selected
+        printf '\e[?25h'
+      elif [[ "$arrow" == '[B' ]]; then
+        ((selected++)); [[ $selected -ge $items_len ]] && selected=0
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_dev_menu $selected
+        printf '\e[?25h'
+      elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
+        printf '\e[%dA\e[J' $_dmenu_lines; return
+      elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
+        [[ $selected -eq 9 ]] && { printf '\e[%dA\e[J' $_dmenu_lines; return; }
+        _dev_run $selected
+        echo ""; read -s -n1 -p "Press any key to continue..."
+        break
+      elif [[ "$key" =~ [0-8kKbB] ]]; then
+        case "$key" in
+          [0-8]) local n=$key; [[ $n -ge 1 ]] && _dev_run $((n - 1)) || _dev_run 0 ;;
+          k|K) _dev_run 8 ;;
+          b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
+        esac
+        echo ""; read -s -n1 -p "Press any key to continue..."
+        break
+      fi
+    done
   done
 }
 
@@ -370,7 +385,7 @@ deploy_submenu() {
     echo -n "Select option: "
   }
 
-  _dmenu_lines=15
+  local _dmenu_lines=14
 
   _deploy_run() {
     printf '\e[%dA\e[J' $_dmenu_lines
@@ -380,7 +395,7 @@ deploy_submenu() {
       2) echo "Bumping minor: v$APP_VERSION →"; npm version minor --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); echo "  v$APP_VERSION" ;;
       3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); echo "  v$APP_VERSION" ;;
       4) docker_submenu ;;
-      5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; echo ""; read -p "Commit message: " msg; if [ -n "$msg" ]; then git commit -m "$msg" 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); else echo "Empty message, skipping commit."; fi ;;
+       5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; if [ -f release-note.md ]; then git commit -F release-note.md 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); else echo "release-note.md not found, skipping commit."; fi ;;
       6) echo "Pushing..."; git push 2>&1 | sed 's/^/  /' ;;
       7) return ;;
     esac
@@ -388,40 +403,47 @@ deploy_submenu() {
 
   while true; do
     _draw_deploy_menu $selected
-    local key= arrow=
-    read -s -n1 key 2>/dev/null
-    if [[ "$key" == $'\e' ]]; then
-      read -s -n2 -t 0.1 arrow 2>/dev/null || true
-    fi
-    if [[ "$arrow" == '[A' ]]; then
-      ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
-    elif [[ "$arrow" == '[B' ]]; then
-      ((selected++)); [[ $selected -ge $items_len ]] && selected=0
-    elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
-      printf '\e[%dA\e[J' $_dmenu_lines; return
-    elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
-      case $selected in
-        4) docker_submenu ;;
-        7) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
-        *) _deploy_run $selected ;;
-      esac
-      echo ""; read -s -n1 -p "Press any key to continue..."
-      continue
-    elif [[ "$key" =~ [0-9bB] ]]; then
-      case "$key" in
-        1) _deploy_run 0 ;;
-        2) _deploy_run 1 ;;
-        3) _deploy_run 2 ;;
-        4) _deploy_run 3 ;;
-        5) docker_submenu ;;
-        6) _deploy_run 5 ;;
-        7) _deploy_run 6 ;;
-        b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
-      esac
-      echo ""; read -s -n1 -p "Press any key to continue..."
-      continue
-    fi
-    printf '\e[%dA\e[J' $_dmenu_lines
+
+    while true; do
+      local key= arrow=
+      read -s -n1 key 2>/dev/null
+      if [[ "$key" == $'\e' ]]; then
+        read -s -n2 -t 0.1 arrow 2>/dev/null || true
+      fi
+      if [[ "$arrow" == '[A' ]]; then
+        ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_deploy_menu $selected
+        printf '\e[?25h'
+      elif [[ "$arrow" == '[B' ]]; then
+        ((selected++)); [[ $selected -ge $items_len ]] && selected=0
+        printf '\e[?25l\e[%dA\r' $_dmenu_lines
+        _draw_deploy_menu $selected
+        printf '\e[?25h'
+      elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
+        printf '\e[%dA\e[J' $_dmenu_lines; return
+      elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
+        case $selected in
+          4) printf '\e[%dA\e[J' $_dmenu_lines; docker_submenu ;;
+          7) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
+          *) _deploy_run $selected; echo ""; read -s -n1 -p "Press any key to continue..." ;;
+        esac
+        break
+      elif [[ "$key" =~ [0-9bB] ]]; then
+        case "$key" in
+          1) _deploy_run 0 ;;
+          2) _deploy_run 1 ;;
+          3) _deploy_run 2 ;;
+          4) _deploy_run 3 ;;
+          5) printf '\e[%dA\e[J' $_dmenu_lines; docker_submenu ;;
+          6) _deploy_run 5 ;;
+          7) _deploy_run 6 ;;
+          b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
+        esac
+        [[ "$key" != "5" ]] && { echo ""; read -s -n1 -p "Press any key to continue..."; }
+        break
+      fi
+    done
   done
 }
 
@@ -449,7 +471,7 @@ menu() {
     echo -n "Select option: "
   }
 
-  local menu_lines=8
+  local menu_lines=9
 
   _exec() {
     printf '\e[%dA\e[J' $menu_lines
@@ -462,26 +484,34 @@ menu() {
 
   while true; do
     _draw_menu $selected
-    local key= arrow=
-    read -s -n1 key 2>/dev/null
-    if [[ "$key" == $'\e' ]]; then
-      read -s -n2 -t 0.1 arrow 2>/dev/null || true
-    fi
-    if [[ "$arrow" == '[A' ]]; then
-      ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
-    elif [[ "$arrow" == '[B' ]]; then
-      ((selected++)); [[ $selected -ge $items_len ]] && selected=0
-    elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
-      printf '\e[%dA\e[J' $menu_lines; echo "Bye."; exit 0
-    elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
-      _exec $selected; continue
-    elif [[ "$key" =~ [0-9qQ] ]]; then
-      case "$key" in
-        1|2) _exec $(($key - 1)); continue ;;
-        q|Q) echo "Bye."; exit 0 ;;
-      esac
-    fi
-    printf '\e[%dA\e[J' $menu_lines
+
+    while true; do
+      local key= arrow=
+      read -s -n1 key 2>/dev/null
+      if [[ "$key" == $'\e' ]]; then
+        read -s -n2 -t 0.1 arrow 2>/dev/null || true
+      fi
+      if [[ "$arrow" == '[A' ]]; then
+        ((selected--)); [[ $selected -lt 0 ]] && selected=$((items_len - 1))
+        printf '\e[?25l\e[%dA\r' $menu_lines
+        _draw_menu $selected
+        printf '\e[?25h'
+      elif [[ "$arrow" == '[B' ]]; then
+        ((selected++)); [[ $selected -ge $items_len ]] && selected=0
+        printf '\e[?25l\e[%dA\r' $menu_lines
+        _draw_menu $selected
+        printf '\e[?25h'
+      elif [[ "$key" == $'\e' && -z "$arrow" ]]; then
+        printf '\e[%dA\e[J' $menu_lines; echo "Bye."; exit 0
+      elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
+        _exec $selected; break
+      elif [[ "$key" =~ [0-9qQ] ]]; then
+        case "$key" in
+          1|2) _exec $(($key - 1)); break ;;
+          q|Q) echo "Bye."; exit 0 ;;
+        esac
+      fi
+    done
   done
 }
 
