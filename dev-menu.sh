@@ -396,7 +396,7 @@ deploy_submenu() {
       3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); echo "  v$APP_VERSION" ;;
       4) docker_submenu ;;
        5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; if [ -f release-note.md ]; then git commit -F release-note.md 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); else echo "release-note.md not found, skipping commit."; fi ;;
-      6) echo "Pushing..."; git push 2>&1 | sed 's/^/  /' ;;
+      6) echo "Pushing..."; git push -u origin HEAD 2>&1 | sed 's/^/  /' ;;
       7) return ;;
     esac
   }
