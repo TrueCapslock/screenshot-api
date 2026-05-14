@@ -100,6 +100,10 @@ router.post('/screenshot', logUsage, async (req, res) => {
     const filename = `${crypto.randomUUID()}.${ext}`;
     const storagePath = await saveFile(filename, result.buffer);
 
+    if (options.baseline) {
+      await unmarkExistingBaselines(req.apiKey.userId, options.url, options);
+    }
+
     const [screenshot] = await db('screenshots')
       .insert({
         api_key_id: req.apiKey.id,
@@ -113,10 +117,6 @@ router.post('/screenshot', logUsage, async (req, res) => {
         completed_at: db.fn.now(),
       })
       .returning('id');
-
-    if (options.baseline) {
-      await unmarkExistingBaselines(req.apiKey.userId, options.url, options);
-    }
 
     if (options.cache) {
       await setCache(options.url, options, result.buffer);

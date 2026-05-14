@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Fix baseline: unmark existing baselines before inserting new one (was inserting first, then unmarking all including the new one, leaving zero baselines)
 - Docker: add named volume for screenshots directory to persist across container redeploys
 - Docker: move port mappings to docker-compose.override.yaml to prevent Coolify deployment port conflict
 - Menu: fix _dmenu_lines global variable bleed between submenus
