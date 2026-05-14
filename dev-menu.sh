@@ -391,14 +391,38 @@ deploy_submenu() {
     printf '\e[%dA\e[J' $_dmenu_lines
     case "$1" in
       0) echo "Running tests..."; npm test 2>&1 | sed 's/^/  /' ;;
-      1) echo "Bumping patch: v$APP_VERSION →"; npm version patch --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); echo "  v$APP_VERSION" ;;
-      2) echo "Bumping minor: v$APP_VERSION →"; npm version minor --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); echo "  v$APP_VERSION" ;;
-      3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); echo "  v$APP_VERSION" ;;
+      1) echo "Bumping patch: v$APP_VERSION →"; npm version patch --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
+      2) echo "Bumping minor: v$APP_VERSION →"; npm version minor --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
+      3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
       4) docker_submenu ;;
-       5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; if [ -f release-note.md ]; then git commit -F release-note.md 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); else echo "release-note.md not found, skipping commit."; fi ;;
+      5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; _commit_from_release_note ;;
       6) echo "Pushing..."; git push -u origin HEAD 2>&1 | sed 's/^/  /' ;;
       7) return ;;
     esac
+  }
+
+  _release_to_version() {
+    local ver=$1
+    if [ -f release-note.md ] && grep -q '^## Unreleased' release-note.md; then
+      sed -i "s/^## Unreleased/## v$ver ($(date '+%Y-%m-%d'))/" release-note.md
+      printf '## Unreleased\n\n%s' "$(cat release-note.md)" > release-note.md
+      echo "  release-note.md: Unreleased → v$ver"
+    fi
+  }
+
+  _commit_from_release_note() {
+    if [ ! -f release-note.md ]; then
+      echo "release-note.md not found, skipping commit."
+      return
+    fi
+    local msg
+    msg=$(awk '/^## Unreleased/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
+    if [ -z "$msg" ]; then
+      echo "No Unreleased entries in release-note.md, skipping commit."
+      return
+    fi
+    echo "$msg" | git commit -F - 2>&1 | sed 's/^/  /'
+    APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
   }
 
   while true; do
