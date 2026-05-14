@@ -19,7 +19,7 @@ feat: keyboard-driven dev menu and screenshot comparison features
   - Webhook route regex handles trailing slashes (/stripe/webhook/?$)
   - express.raw() body parser applied before express.json() for signature verification
 - Fix compare endpoint FK collision: explicit .select('screenshots.id', ...)
-- Docker: compose port mappings moved to docker-compose.override.yaml (prevents Coolify deployment conflict on port 5432/6379), Dockerfile Playwright fix (npm ci before install)
+- Docker: compose port mappings moved to docker-compose.override.yaml (prevents Coolify deployment conflict on port 5432/6379), screenshots volume mount to persist across redeploys, Dockerfile Playwright fix (npm ci before install)
 - Version from package.json at runtime, exposed via /health and X-API-Version header
 - Local Docker URLs in .env (replaced remote cloud URLs)
 - Menu restructured: no-flicker arrow nav, all _dmenu_lines marked local to prevent variable bleed
