@@ -9,7 +9,10 @@ export async function cleanupOldScreenshots() {
   const cutoff = new Date(Date.now() - retentionMs).toISOString();
 
   try {
-    const old = await db('screenshots').where('created_at', '<', cutoff).select('id', 'storage_path');
+    const old = await db('screenshots')
+      .where('created_at', '<', cutoff)
+      .where('is_baseline', false)
+      .select('id', 'storage_path');
 
     if (old.length === 0) return;
 

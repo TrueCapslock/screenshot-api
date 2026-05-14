@@ -73,7 +73,7 @@ router.post('/stripe/portal', auth, async (req, res) => {
   }
 });
 
-router.post('/stripe/webhook', async (req, res) => {
+router.post(/^\/stripe\/webhook\/?$/, async (req, res) => {
   const sig = req.headers['stripe-signature'];
   if (!sig) {
     return res.status(400).json({ error: 'missing_signature', message: 'stripe-signature header required' });

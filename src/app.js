@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import healthRouter from './routes/health.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import config from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,6 +16,11 @@ const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('short'));
+app.use((_req, res, next) => {
+  res.set('X-API-Version', config.version);
+  res.req.app.locals.version = config.version;
+  next();
+});
 
 app.get('/', (req, res) => res.redirect('/docs'));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
@@ -39,6 +45,7 @@ const { default: screenshotRouter } = await import('./routes/screenshot.js');
 const { default: asyncRouter } = await import('./routes/async.js');
 const { default: adminRouter } = await import('./routes/admin.js');
 const { default: compareRouter } = await import('./routes/compare.js');
+const { default: describeRouter } = await import('./routes/describe.js');
 
 app.use(healthRouter);
 app.use('/v1', authRouter);
@@ -49,6 +56,7 @@ app.use('/v1', screenshotRouter);
 app.use('/v1', asyncRouter);
 app.use('/v1', adminRouter);
 app.use('/v1', compareRouter);
+app.use('/v1', describeRouter);
 
 app.use(errorHandler);
 

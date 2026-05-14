@@ -87,6 +87,7 @@
   .container { max-width: 900px; margin: 0 auto; padding: 24px; }
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
   h1 { font-size: 24px; }
+  .version-tag { font-size: 11px; font-weight: 400; color: var(--muted, #888); margin-left: 6px; vertical-align: middle; }
   h2 { font-size: 18px; margin-bottom: 12px; }
   .card { background: var(--card-bg); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px var(--shadow); transition: background .2s, box-shadow .2s; }
   .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
@@ -140,12 +141,31 @@
   a:hover { color: var(--primary-hover); }
   .ribbon { position: absolute; top: 0; right: 0; width: 100px; height: 100px; overflow: hidden; pointer-events: none; }
   .ribbon span { position: absolute; top: 18px; right: -28px; background: #0066ff; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 32px; transform: rotate(45deg); letter-spacing: 0.5px; }
+
+  .modal-overlay { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px; }
+  .modal { background:var(--card-bg);border-radius:12px;max-width:95vw;max-height:95vh;width:900px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+  .modal-header { display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0; }
+  .modal-header h3 { font-size:15px;margin:0; }
+  .modal-tabs { display:flex;gap:4px;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0; }
+  .modal-tab { padding:10px 16px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;transition:all .15s;font-family:inherit; }
+  .modal-tab:hover { color:var(--text); }
+  .modal-tab.active { color:var(--primary);border-bottom-color:var(--primary);font-weight:600; }
+  .modal-tab:disabled { opacity:0.4;cursor:not-allowed; }
+  .modal-body { flex:1;overflow:auto;padding:20px;text-align:center;min-height:300px;display:flex;align-items:center;justify-content:center; }
+  .modal-body img { max-width:100%;max-height:65vh;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.15); }
+
+  .img-comp-container { position:relative;display:inline-block;max-width:100%;min-height:200px;overflow:hidden;user-select:none;vertical-align:top; }
+  .img-comp-baseline { display:block;max-width:100%;height:auto;border-radius:4px; }
+  .img-comp-overlay { position:absolute;top:0;left:0;width:50%;height:100%;overflow:hidden; }
+  .img-comp-overlay img { display:block;width:100%;height:100%;object-fit:cover;object-position:left top; }
+  .img-comp-slider { position:absolute;top:0;left:50%;width:4px;height:100%;background:var(--primary);cursor:ew-resize;z-index:10; }
+  .img-comp-slider::after { content: '⟷';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg);border:2px solid var(--primary);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.3); }
 </style>
 </head>
 <body>
 <div class="container" id="app">
   <header>
-    <h1>Screenshot API</h1>
+    <h1>Screenshot API <span id="versionTag" class="version-tag"></span></h1>
     <div class="flex">
       <span id="tierDisplay" class="tier-badge tier-free">Free</span>
       <button id="langBtn" class="theme-toggle" onclick="toggleLang()" title="Switch language">NO</button>
@@ -294,15 +314,30 @@
             <input type="checkbox" id="testFullPage" checked> <span data-i18n="fullPage">Full page</span>
           </label>
           <label style="display:flex;align-items:center;gap:4px;">
+            <span data-i18n="resolution">Resolution</span>
+            <select id="testResolution" onchange="toggleResolution()" style="padding:4px 6px;border-radius:4px;font-size:13px;">
+              <option value="desktop">Desktop (1280×720)</option>
+              <option value="tablet">Tablet (768×1024)</option>
+              <option value="mobile">Mobile (390×844)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <label id="testWidthLabel" style="display:flex;align-items:center;gap:4px;display:none;">
             <span data-i18n="width">Width</span> <input type="number" id="testWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
           </label>
-          <label style="display:flex;align-items:center;gap:4px;">
+          <label id="testHeightLabel" style="display:flex;align-items:center;gap:4px;display:none;">
             <span data-i18n="height">Height</span> <input type="number" id="testHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
           </label>
           <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
             <input type="checkbox" id="testAcceptCookies" onchange="toggleCookieSelector()"> <span data-i18n="acceptCookies">Accept cookies</span>
           </label>
           <input type="text" id="testCookieSelector" data-i18n-placeholder="cookieSelectorPlaceholder" placeholder="Custom selector (optional)" style="width:220px;padding:4px 6px;border-radius:4px;font-size:13px;display:none;">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+            <input type="checkbox" id="testCompare"> <span>Compare to baseline</span>
+          </label>
+          <span id="compareStatus" style="font-size:12px;color:var(--text-muted);"></span>
         </div>
       </div>
       <div id="tryHtmlSection" style="display:none;">
@@ -338,6 +373,16 @@
         <img id="previewImg" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
         <div style="margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="closePreview()" data-i18n="closePreview">Close</button></div>
       </div>
+      <div id="previewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 id="modalTitle">Screenshot</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal()" data-i18n="closePreview">Close</button>
+          </div>
+          <div class="modal-tabs" id="modalTabs"></div>
+          <div class="modal-body" id="modalBody"></div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -357,6 +402,8 @@
 const API = window.location.origin;
 let apiKey = localStorage.getItem('apiKey');
 let userData = null;
+fetch('/health').then(r => r.json()).then(d => { document.getElementById('versionTag').textContent = 'v' + d.version; }).catch(() => {});
+
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (apiKey) headers['x-api-key'] = apiKey;
@@ -623,31 +670,144 @@ function toggleTheme() {
   }
 })();
 
+const _screenshotMeta = new Map();
+
+let _modalState = { id: null, baselineUrl: null, screenshotUrl: null, diffUrl: null };
+
+function closeModal() {
+  document.getElementById('previewModal').style.display = 'none';
+  _modalState = { id: null, baselineUrl: null, screenshotUrl: null, diffUrl: null };
+}
+
 function closePreview() {
-  document.getElementById('screenshotPreview').style.display = 'none';
+  closeModal();
+}
+
+async function openPreview(id) {
+  const modal = document.getElementById('previewModal');
+  const body = document.getElementById('modalBody');
+  const tabs = document.getElementById('modalTabs');
+  modal.style.display = 'flex';
+  body.innerHTML = '<p style="color:var(--text-muted);">Loading...</p>';
+  tabs.innerHTML = '';
+  document.getElementById('modalTitle').textContent = 'Screenshot';
+
+  _modalState = { id: null, baselineUrl: null, screenshotUrl: null, diffUrl: null };
+
+  try {
+    // Fetch screenshot image (always available)
+    const screenshotRes = await fetch(`${API}/v1/screenshot/${id}`, { headers: { 'x-api-key': apiKey } });
+    let screenshotBlob = null;
+    if (screenshotRes.ok) screenshotBlob = await screenshotRes.blob();
+
+    _modalState.id = id;
+    _modalState.screenshotUrl = screenshotBlob ? URL.createObjectURL(screenshotBlob) : null;
+
+    // Fetch diff (endpoint returns 200 JSON when none exists)
+    let diffBlob = null;
+    try {
+      const diffRes = await fetch(`${API}/v1/screenshot/${id}/diff`, { headers: { 'x-api-key': apiKey } });
+      const dct = diffRes.headers.get('Content-Type') || '';
+      if (diffRes.ok && dct.startsWith('image/')) diffBlob = await diffRes.blob();
+    } catch {}
+    if (diffBlob) _modalState.diffUrl = URL.createObjectURL(diffBlob);
+
+    // Fetch baseline (endpoint returns 200 JSON when none exists)
+    let baselineBlob = null;
+    try {
+      const baselineRes = await fetch(`${API}/v1/screenshot/${id}/baseline`, { headers: { 'x-api-key': apiKey } });
+      const bct = baselineRes.headers.get('Content-Type') || '';
+      if (baselineRes.ok && bct.startsWith('image/')) baselineBlob = await baselineRes.blob();
+    } catch {}
+    if (baselineBlob) _modalState.baselineUrl = URL.createObjectURL(baselineBlob);
+
+    // Build tabs
+    const tabDefs = [];
+    if (_modalState.screenshotUrl) tabDefs.push({ id: 'screenshot', label: 'Screenshot' });
+    if (_modalState.diffUrl) tabDefs.push({ id: 'diff', label: 'Diff' });
+    if (_modalState.baselineUrl) tabDefs.push({ id: 'baseline', label: 'Baseline' });
+    if (_modalState.screenshotUrl && _modalState.baselineUrl) tabDefs.push({ id: 'compare', label: 'Compare' });
+
+    if (tabDefs.length === 0) {
+      body.innerHTML = '<p style="color:var(--text-muted);">Screenshot could not be loaded.</p>';
+      return;
+    }
+
+    tabs.innerHTML = tabDefs.map((t, i) =>
+      `<button class="modal-tab${i === 0 ? ' active' : ''}" data-tab="${t.id}" onclick="switchModalTab('${t.id}')">${t.label}</button>`
+    ).join('');
+
+    showModalTab(tabDefs[0].id);
+  } catch {
+    body.innerHTML = '<p style="color:var(--text-danger);">Failed to load</p>';
+  }
+}
+
+function switchModalTab(tabId) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  showModalTab(tabId);
+}
+
+function showModalTab(tabId) {
+  const body = document.getElementById('modalBody');
+  if (tabId === 'screenshot' && _modalState.screenshotUrl) {
+    body.innerHTML = `<img src="${_modalState.screenshotUrl}" alt="Screenshot">`;
+  } else if (tabId === 'diff' && _modalState.diffUrl) {
+    body.innerHTML = `<img src="${_modalState.diffUrl}" alt="Diff overlay">`;
+  } else if (tabId === 'baseline' && _modalState.baselineUrl) {
+    body.innerHTML = `<img src="${_modalState.baselineUrl}" alt="Baseline">`;
+  } else if (tabId === 'compare' && _modalState.screenshotUrl && _modalState.baselineUrl) {
+    body.innerHTML = `
+      <div style="padding:20px;text-align:center;">
+        <div class="img-comp-container" id="imgCompContainer">
+          <img src="${_modalState.baselineUrl}" alt="Baseline" class="img-comp-baseline" id="imgCompBaselineImg">
+          <div class="img-comp-overlay" id="imgCompOverlay">
+            <img src="${_modalState.screenshotUrl}" alt="Screenshot" id="imgCompScreenshotImg">
+          </div>
+          <div class="img-comp-slider" id="imgCompSlider"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="describeDiff('${_modalState.id}', this)" class="btn btn-secondary btn-sm">Describe diff</button>
+          <div id="modalDescribeResult" style="font-size:13px;color:var(--text-secondary);text-align:left;margin-top:8px;"></div>
+        </div>
+      </div>
+    `;
+    initSlider();
+  }
+}
+
+function initSlider() {
+  const container = document.getElementById('imgCompContainer');
+  const overlay = document.getElementById('imgCompOverlay');
+  const slider = document.getElementById('imgCompSlider');
+
+  if (!container || !overlay || !slider) return;
+
+  let dragging = false;
+
+  function move(x) {
+    const rect = container.getBoundingClientRect();
+    let pct = (x - rect.left) / rect.width;
+    pct = Math.max(0, Math.min(1, pct));
+    overlay.style.width = (pct * 100) + '%';
+    slider.style.left = (pct * 100) + '%';
+  }
+
+  slider.addEventListener('mousedown', (e) => { dragging = true; e.preventDefault(); });
+  window.addEventListener('mousemove', (e) => { if (dragging) move(e.clientX); });
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  slider.addEventListener('touchstart', (e) => { dragging = true; e.preventDefault(); });
+  window.addEventListener('touchmove', (e) => { if (dragging) move(e.touches[0].clientX); });
+  window.addEventListener('touchend', () => { dragging = false; });
+}
+
+async function viewDiff(id) {
+  openPreview(id);
 }
 
 async function previewScreenshot(id) {
-  const preview = document.getElementById('screenshotPreview');
-  const img = document.getElementById('previewImg');
-  preview.style.display = 'block';
-  img.alt = 'Loading...';
-  img.src = '';
-  setTimeout(() => preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-  try {
-    const res = await fetch(`${API}/v1/screenshot/${id}`, {
-      headers: { 'x-api-key': apiKey },
-    });
-    if (res.ok) {
-      const blob = await res.blob();
-      img.src = URL.createObjectURL(blob);
-    } else {
-      img.alt = 'Failed to load';
-    }
-  } catch {
-    img.alt = 'Network error';
-  }
-  return false;
+  openPreview(id);
 }
 
 async function downloadScreenshot(id) {
@@ -671,6 +831,35 @@ async function downloadScreenshot(id) {
   return false;
 }
 
+async function describeDiff(id, btn) {
+  const resultDiv = btn.parentElement.querySelector('[id$="DescribeResult"]');
+  if (!resultDiv) return;
+  btn.disabled = true;
+  btn.textContent = 'Describing...';
+  resultDiv.innerHTML = '<span style="color:var(--text-muted);">Analyzing with AI...</span>';
+  try {
+    const res = await fetch(`${API}/v1/screenshot/${id}/describe`, { headers: { 'x-api-key': apiKey } });
+    if (!res.ok) {
+      const data = await res.json();
+      resultDiv.innerHTML = '<span style="color:var(--text-danger);">' + (data.message || data.error || 'Failed') + '</span>';
+      return;
+    }
+    const data = await res.json();
+    resultDiv.innerHTML = '<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;white-space:pre-wrap;line-height:1.6;">' + escapeHtml(data.description) + '</div>';
+  } catch {
+    resultDiv.innerHTML = '<span style="color:var(--text-danger);">Network error</span>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Describe';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 async function setBaseline(id) {
   try {
     const res = await api('/v1/screenshot/' + id + '/baseline', { method: 'POST' });
@@ -681,23 +870,6 @@ async function setBaseline(id) {
       const d = await res.json();
       showToast(d.message || 'Failed', 'error');
     }
-  } catch {
-    showToast('Network error', 'error');
-  }
-  return false;
-}
-
-async function viewDiff(id) {
-  try {
-    const res = await fetch(`${API}/v1/screenshot/${id}/diff`, {
-      headers: { 'x-api-key': apiKey },
-    });
-    if (!res.ok) { showToast('Diff not found', 'error'); return false; }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const preview = document.getElementById('screenshotPreview');
-    preview.innerHTML = '<div style="margin-bottom:8px;"><a href="#" onclick="this.parentElement.parentElement.style.display=\'none\';this.parentElement.innerHTML=\'\';return false" class="btn btn-secondary btn-sm" data-i18n="closePreview">Close</a> <span style="font-size:13px;color:var(--text-secondary);">Diff image</span></div><img src="' + url + '" style="max-width:100%;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.2);">';
-    preview.style.display = 'block';
   } catch {
     showToast('Network error', 'error');
   }
@@ -738,6 +910,7 @@ async function loadScreenshots() {
       let badges = '';
       if (s.is_baseline) badges += '<span style="font-size:11px;background:#1a3a2a;color:#8bc99b;padding:1px 6px;border-radius:4px;margin-left:4px;">BASELINE</span>';
       if (s.diff_percentage !== null) badges += '<span style="font-size:11px;background:' + (s.diff_percentage > 0.1 ? '#3a1a1a;color:#f0a0a0' : '#1a2a3a;color:#8bb8f0') + ';padding:1px 6px;border-radius:4px;margin-left:4px;">' + s.diff_percentage + '% diff</span>';
+      _screenshotMeta.set(s.id, { hasDiff: s.diff_percentage !== null, url: s.url, hasBaseline: s.baseline_id !== null || s.is_baseline });
       let actions = '';
       if (s.status === 'completed') {
         actions = '<div style="display:flex;gap:4px;">';
@@ -817,6 +990,15 @@ function toggleCookieSelector() {
   inp.style.display = cb.checked ? 'inline-block' : 'none';
 }
 
+function toggleResolution() {
+  const sel = document.getElementById('testResolution').value;
+  const wLabel = document.getElementById('testWidthLabel');
+  const hLabel = document.getElementById('testHeightLabel');
+  const show = sel === 'custom';
+  wLabel.style.display = show ? 'flex' : 'none';
+  hLabel.style.display = show ? 'flex' : 'none';
+}
+
 async function testScreenshot() {
   const url = document.getElementById('testUrl').value;
   if (!url) return showToast(t('enterUrl'), 'error');
@@ -825,28 +1007,65 @@ async function testScreenshot() {
   const acceptCookiesCb = document.getElementById('testAcceptCookies').checked;
   const cookieSelector = document.getElementById('testCookieSelector').value.trim();
   const acceptCookies = acceptCookiesCb ? (cookieSelector || true) : undefined;
-  const width = parseInt(document.getElementById('testWidth').value, 10) || 1280;
-  const height = parseInt(document.getElementById('testHeight').value, 10) || 720;
+  const resolution = document.getElementById('testResolution').value;
+  let width, height, mobile;
+  if (resolution === 'mobile') {
+    mobile = true;
+    width = 390;
+    height = 844;
+  } else if (resolution === 'tablet') {
+    width = 768;
+    height = 1024;
+  } else if (resolution === 'custom') {
+    width = parseInt(document.getElementById('testWidth').value, 10) || 1280;
+    height = parseInt(document.getElementById('testHeight').value, 10) || 720;
+  } else {
+    width = 1280;
+    height = 720;
+  }
+  const compare = document.getElementById('testCompare').checked;
   const result = document.getElementById('testResult');
+  const status = document.getElementById('compareStatus');
   result.innerHTML = '<p style="color:#666;">' + t('capturing') + '</p>';
   try {
-    const res = await fetch(`${API}/v1/screenshot`, {
+    const endpoint = compare ? '/v1/compare' : '/v1/screenshot';
+    const res = await fetch(`${API}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
-      body: JSON.stringify({ url, format, fullPage, acceptCookies, width, height }),
+      body: JSON.stringify({ url, format, fullPage, acceptCookies, width, height, ...(mobile ? { mobile } : {}) }),
     });
     if (res.ok) {
-      const blob = await res.blob();
-      const imgUrl = URL.createObjectURL(blob);
-      const duration = res.headers.get('X-Duration-Ms');
-      result.innerHTML = `
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">${t('capturedIn')} ${duration}ms</p>
-        <img src="${imgUrl}" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
-      `;
-      document.getElementById('accUsage').textContent = parseInt(document.getElementById('accUsage').textContent) + 1;
-      document.getElementById('accScreenshotsCount').textContent = parseInt(document.getElementById('accScreenshotsCount').textContent) + 1;
+      if (compare) {
+        const data = await res.json();
+        const pct = data.diff_percentage;
+        const pctColor = pct > 0.1 ? '#dc3545' : '#28a745';
+        result.innerHTML = `
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${t('capturedIn')} ${data.duration_ms}ms</p>
+          <p style="font-size:14px;margin-bottom:8px;">Diff: <span style="color:${pctColor};font-weight:700;">${pct}%</span> (${data.diff_pixels} of ${data.total_pixels} pixels)
+          <button onclick="describeDiff('${data.screenshot_id}', this)" style="margin-left:12px;font-size:12px;padding:2px 10px;" class="btn btn-secondary btn-sm">Describe</button></p>
+          <div id="describeResult" style="font-size:13px;color:var(--text-secondary);text-align:left;margin-top:4px;"></div>
+        `;
+        status.textContent = 'Baseline found — compared';
+        status.style.color = '#28a745';
+      } else {
+        const blob = await res.blob();
+        const imgUrl = URL.createObjectURL(blob);
+        const duration = res.headers.get('X-Duration-Ms');
+        const isBaseline = res.headers.get('X-Baseline');
+        result.innerHTML = `
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">${t('capturedIn')} ${duration}ms${isBaseline ? ' &middot; Saved as baseline' : ''}</p>
+          <img src="${imgUrl}" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
+        `;
+        document.getElementById('accUsage').textContent = parseInt(document.getElementById('accUsage').textContent) + 1;
+        document.getElementById('accScreenshotsCount').textContent = parseInt(document.getElementById('accScreenshotsCount').textContent) + 1;
+      }
+      loadScreenshots();
     } else {
       const data = await res.json();
+      if (compare && res.status === 404) {
+        status.textContent = 'No baseline found. Take a screenshot with "Set Baseline" first.';
+        status.style.color = '#dc3545';
+      }
       result.innerHTML = `<p style="color:#dc3545;">${data.message}</p>`;
     }
   } catch (e) {

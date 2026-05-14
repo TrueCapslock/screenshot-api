@@ -20,6 +20,7 @@ router.get('/health', async (_req, res) => {
 
   res.status(allOk ? 200 : 503).json({
     status: allOk ? 'ok' : 'degraded',
+    version: res.req.app.locals.version,
     timestamp: new Date().toISOString(),
     checks,
   });

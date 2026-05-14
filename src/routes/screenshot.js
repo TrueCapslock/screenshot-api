@@ -14,6 +14,18 @@ const router = Router();
 
 router.use(auth, rateLimit);
 
+function unmarkExistingBaselines(userId, url, options) {
+  const viewportWidth = options.mobile ? 390 : options.width || 1280;
+  const viewportHeight = options.mobile ? 844 : options.height || 720;
+  return db('screenshots')
+    .whereIn('api_key_id', db('api_keys').select('id').where('user_id', userId))
+    .where({ url, is_baseline: true })
+    .whereRaw("(options->>'mobile')::boolean = ?", [!!options.mobile])
+    .whereRaw("COALESCE((options->>'width')::int, 1280) = ?", [viewportWidth])
+    .whereRaw("COALESCE((options->>'height')::int, 720) = ?", [viewportHeight])
+    .update({ is_baseline: false });
+}
+
 const screenshotSchema = z.object({
   url: z.string().url().max(2048),
   width: z.number().int().min(1).max(7680).optional(),
@@ -102,6 +114,10 @@ router.post('/screenshot', logUsage, async (req, res) => {
       })
       .returning('id');
 
+    if (options.baseline) {
+      await unmarkExistingBaselines(req.apiKey.userId, options.url, options);
+    }
+
     if (options.cache) {
       await setCache(options.url, options, result.buffer);
     }
@@ -182,13 +198,15 @@ router.post('/screenshot/:id/baseline', async (req, res) => {
   const screenshot = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
     .where({ 'screenshots.id': req.params.id, 'api_keys.user_id': req.apiKey.userId })
-    .select('screenshots.id')
+    .select('screenshots.id', 'screenshots.url', 'screenshots.options')
     .first();
 
   if (!screenshot) {
     return res.status(404).json({ error: 'not_found', message: 'Screenshot not found' });
   }
 
+  const opts = typeof screenshot.options === 'string' ? JSON.parse(screenshot.options) : screenshot.options || {};
+  await unmarkExistingBaselines(req.apiKey.userId, screenshot.url, opts);
   await db('screenshots').where({ id: screenshot.id }).update({ is_baseline: true });
   res.json({ message: 'Baseline set', id: screenshot.id });
 });

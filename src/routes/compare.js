@@ -13,8 +13,6 @@ import config from '../config.js';
 
 const router = Router();
 
-router.use(auth, rateLimit);
-
 const compareSchema = z.object({
   url: z.string().url().max(2048),
   width: z.number().int().min(1).max(7680).optional(),
@@ -35,7 +33,7 @@ const compareSchema = z.object({
   scale: z.number().int().min(1).max(3).optional(),
 });
 
-router.post('/compare', logUsage, async (req, res) => {
+router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
   if (!req.isAdmin && req.tier !== 'pro' && req.tier !== 'business') {
     return res.status(403).json({ error: 'forbidden', message: 'Comparison is only available on Pro and Business tiers' });
   }
@@ -78,6 +76,7 @@ router.post('/compare', logUsage, async (req, res) => {
       })
       .whereNotNull('screenshots.storage_path')
       .orderBy('screenshots.created_at', 'desc')
+      .select('screenshots.id', 'screenshots.storage_path')
       .first();
 
     if (!baseline) {
@@ -98,24 +97,38 @@ router.post('/compare', logUsage, async (req, res) => {
     const screenshotPath = await saveFile(screenshotFilename, result.buffer);
 
     const baselineBuffer = await readFile(baseline.storage_path);
-    const baselineImg = sharp(baselineBuffer);
-    const baselineMeta = await baselineImg.metadata();
-    const baselineRgba = await baselineImg.removeAlpha().raw().toBuffer();
-
-    const currentImg = sharp(result.buffer);
-    const currentMeta = await currentImg.metadata();
-    const currentRgba = await currentImg.removeAlpha().raw().toBuffer();
+    const [baselineMeta, currentMeta] = await Promise.all([
+      sharp(baselineBuffer).metadata(),
+      sharp(result.buffer).metadata(),
+    ]);
 
     const width = Math.max(baselineMeta.width, currentMeta.width);
     const height = Math.max(baselineMeta.height, currentMeta.height);
+
+    const [baselineRgba, currentRgba] = await Promise.all([
+      sharp(baselineBuffer).resize(width, height, { fit: 'fill' }).ensureAlpha().raw().toBuffer(),
+      sharp(result.buffer).resize(width, height, { fit: 'fill' }).ensureAlpha().raw().toBuffer(),
+    ]);
+
     const diffRgba = new Uint8Array(width * height * 4);
 
-    const mismatched = pixelmatch(baselineRgba, currentRgba, diffRgba, width, height, {
-      threshold: 0.1,
-      includeAA: false,
-      alpha: 0.5,
-      diffColor: [255, 0, 0],
-    });
+    let mismatched;
+    try {
+      mismatched = pixelmatch(baselineRgba, currentRgba, diffRgba, width, height, {
+        threshold: 0.1,
+        includeAA: false,
+        alpha: 0.5,
+        diffColor: [255, 0, 0],
+      });
+    } catch (pErr) {
+      console.error('pixelmatch error:', pErr.message);
+      console.error('  baselineRgba length:', baselineRgba.length);
+      console.error('  currentRgba length:', currentRgba.length);
+      console.error('  diffRgba length:', diffRgba.length);
+      console.error('  width:', width, 'height:', height, 'expected:', width * height * 4);
+      console.error('  baselineMeta:', baselineMeta, 'currentMeta:', currentMeta);
+      throw pErr;
+    }
 
     const totalPixels = width * height;
     const diffPercentage = Math.round((mismatched / totalPixels) * 10000) / 100;
@@ -158,6 +171,45 @@ router.post('/compare', logUsage, async (req, res) => {
   }
 });
 
+router.get('/screenshot/:id/baseline', auth, async (req, res) => {
+  const screenshot = await db('screenshots')
+    .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
+    .where({ 'screenshots.id': req.params.id, 'api_keys.user_id': req.apiKey.userId })
+    .select('screenshots.url')
+    .first();
+
+  if (!screenshot) {
+    return res.status(404).json({ error: 'not_found', message: 'Screenshot not found' });
+  }
+
+  const baseline = await db('screenshots')
+    .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
+    .where({
+      'api_keys.user_id': req.apiKey.userId,
+      'screenshots.url': screenshot.url,
+      'screenshots.is_baseline': true,
+    })
+    .whereNotNull('screenshots.storage_path')
+    .orderBy('screenshots.created_at', 'desc')
+    .select('screenshots.storage_path', 'screenshots.format')
+    .first();
+
+  if (!baseline) {
+    return res.status(200).json({ exists: false });
+  }
+
+  try {
+    const buf = await readFile(baseline.storage_path);
+    const contentType =
+      baseline.format === 'jpeg' ? 'image/jpeg' : baseline.format === 'webp' ? 'image/webp' : 'image/png';
+    res.set('Content-Type', contentType);
+    res.set('X-Baseline-Exists', 'true');
+    res.status(200).send(buf);
+  } catch {
+    return res.status(200).json({ exists: false });
+  }
+});
+
 router.get('/screenshot/:id/diff', auth, async (req, res) => {
   const screenshot = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
@@ -166,15 +218,16 @@ router.get('/screenshot/:id/diff', auth, async (req, res) => {
     .first();
 
   if (!screenshot || !screenshot.diff_storage_path) {
-    return res.status(404).json({ error: 'not_found', message: 'Diff image not found' });
+    return res.status(200).json({ exists: false });
   }
 
   try {
     const buf = await readFile(screenshot.diff_storage_path);
     res.set('Content-Type', 'image/png');
+    res.set('X-Diff-Exists', 'true');
     res.status(200).send(buf);
   } catch {
-    res.status(404).json({ error: 'not_found', message: 'Diff image file not found' });
+    return res.status(200).json({ exists: false });
   }
 });
 

@@ -88,7 +88,7 @@ describe('startCleanup / stopCleanup', () => {
 
     startCleanup();
 
-    expect(mockDbFn.where).toHaveBeenCalledOnce();
+    expect(mockDbFn.where).toHaveBeenCalledTimes(2);
     expect(mockDbFn.select).toHaveBeenCalledOnce();
     expect(setIntervalSpy).toHaveBeenCalledOnce();
   });

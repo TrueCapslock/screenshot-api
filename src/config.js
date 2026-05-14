@@ -1,6 +1,14 @@
 import 'dotenv/config';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 
 export default {
+  version: pkg.version,
+
   port: parseInt(process.env.PORT || '3000', 10),
   baseUrl: process.env.BASE_URL || 'http://localhost:3000',
   env: process.env.NODE_ENV || 'development',
@@ -42,6 +50,8 @@ export default {
   },
 
   resendKey: process.env.RESEND_KEY || '',
+
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
 
   adminEmail: process.env.ADMIN_EMAIL || '',
 
