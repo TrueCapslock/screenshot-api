@@ -60,6 +60,11 @@ async function takeScreenshot(url, options = {}) {
 
   const page = await context.newPage();
 
+  const width = options.width || 1280;
+  const height = options.height || 720;
+
+  await page.setViewportSize({ width, height });
+
   try {
     await page.goto(url, {
       waitUntil: options.waitUntil || 'networkidle',
@@ -102,13 +107,6 @@ async function takeScreenshot(url, options = {}) {
       }
     }
 
-    const width = options.width || 1280;
-    const height = options.height || 720;
-
-    if (!clip) {
-      await page.setViewportSize({ width, height });
-    }
-
     const screenshotBuffer = await page.screenshot({
       type: format === 'jpeg' ? 'jpeg' : 'png',
       quality: format === 'jpeg' ? quality : undefined,
@@ -139,6 +137,11 @@ export async function renderHtml(html, options = {}) {
   });
   const page = await context.newPage();
 
+  const width = options.width || 1280;
+  const height = options.height || 720;
+
+  await page.setViewportSize({ width, height });
+
   try {
     await page.setContent(html, {
       waitUntil: 'networkidle',
@@ -155,12 +158,6 @@ export async function renderHtml(html, options = {}) {
 
     const format = options.format || 'png';
     const fullPage = options.fullPage !== false;
-    const width = options.width || 1280;
-    const height = options.height || 720;
-
-    if (!fullPage) {
-      await page.setViewportSize({ width, height });
-    }
 
     const screenshotBuffer = await page.screenshot({
       type: format === 'jpeg' ? 'jpeg' : 'png',

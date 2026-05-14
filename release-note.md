@@ -8,6 +8,7 @@
 - Menu: remove "Press any key" prompt after returning from docker submenu
 - Menu: add inner input loop for smooth no-flicker arrow navigation in all submenus
 - Menu: fix line count values for all menus (prevents menu drift on arrow keys)
+- Renderer: set viewport before page navigation so CSS media queries use correct screen size
 
 ## v0.1.0 (2026-05-14)
 
