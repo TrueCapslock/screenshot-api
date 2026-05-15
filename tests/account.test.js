@@ -8,6 +8,7 @@ const qb = vi.hoisted(() => {
     select: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
+    offset: vi.fn().mockReturnThis(),
     first: vi.fn().mockResolvedValue(null),
     count: vi.fn().mockReturnThis(),
     del: vi.fn().mockResolvedValue(1),

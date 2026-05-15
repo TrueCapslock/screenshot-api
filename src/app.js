@@ -13,6 +13,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const openapiSpec = JSON.parse(readFileSync(join(__dirname, 'openapi.json'), 'utf-8'));
 const app = express();
 
+app.set('trust proxy', true);
+
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use((_req, res, next) => {

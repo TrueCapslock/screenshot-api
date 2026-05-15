@@ -52,7 +52,7 @@ const adminRow = {
   key_hash: '$2b$10$fakehash',
 };
 
-const AUTH_APIKEY_CALLS = 6;
+const AUTH_APIKEY_CALLS = 5;
 
 let app;
 

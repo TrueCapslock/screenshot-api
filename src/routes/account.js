@@ -24,15 +24,23 @@ router.get('/account', async (req, res) => {
     .where({ user_id: req.apiKey.userId })
     .select('id', 'key_prefix', 'name', 'active', 'last_used_at', 'created_at');
 
+  const tierConfig = config.tiers[user.tier] || config.tiers.free;
+
   res.json({
     user: { ...user, is_admin: req.isAdmin },
     current_key_prefix: req.apiKey.keyPrefix,
     usage: parseInt((usage?.count || '0').toString(), 10),
+    monthly_limit: tierConfig.monthlyLimit,
+    rate_limit: { limit: tierConfig.rateLimit, window_ms: tierConfig.windowMs },
     keys,
+    screenshot_retention_hours: config.screenshotRetentionHours,
   });
 });
 
 router.get('/account/screenshots', async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || '50', 10), 100);
+  const offset = Math.max(parseInt(req.query.offset || '0', 10), 0);
+
   const screenshots = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
     .where({ 'api_keys.user_id': req.apiKey.userId })
@@ -47,9 +55,11 @@ router.get('/account/screenshots', async (req, res) => {
       'screenshots.diff_percentage',
       'screenshots.created_at',
       'screenshots.completed_at',
+      'screenshots.options',
     )
     .orderBy('screenshots.created_at', 'desc')
-    .limit(50);
+    .limit(limit)
+    .offset(offset);
 
   const [{ count }] = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
@@ -59,11 +69,27 @@ router.get('/account/screenshots', async (req, res) => {
   const baseUrl = config.baseUrl;
   res.json({
     total: parseInt(count, 10),
+    offset,
+    limit,
     screenshots: screenshots.map((s) => ({
       ...s,
       image_url: s.status === 'completed' ? `${baseUrl}/v1/screenshot/${s.id}` : null,
     })),
   });
+});
+
+router.get('/account/recent-urls', async (req, res) => {
+  const rows = await db('screenshots')
+    .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
+    .where({ 'api_keys.user_id': req.apiKey.userId })
+    .whereNotNull('screenshots.url')
+    .select('screenshots.url')
+    .max('screenshots.created_at as latest')
+    .groupBy('screenshots.url')
+    .orderBy('latest', 'desc')
+    .limit(10);
+
+  res.json({ urls: rows.map((r) => r.url) });
 });
 
 export default router;

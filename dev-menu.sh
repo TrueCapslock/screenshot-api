@@ -302,7 +302,7 @@ dev_submenu() {
       4) if $worker_running; then stop_worker; else start_worker; fi ;;
       5) if $docker_running; then stop_docker; else start_docker; fi ;;
       6) echo "Running migrations..."; npm run migrate 2>&1 | sed 's/^/  /' ;;
-      7) status; echo ""; read -s -n1 -p "Press any key to continue..." ;;
+      7) status ;;
       8) local pid=$(lsof -ti :3000 2>/dev/null); if [ -n "$pid" ]; then echo "Killing PID $pid on :3000..."; kill $pid 2>/dev/null; sleep 1; echo "Done."; else echo "Nothing running on :3000."; fi ;;
       9) return ;;
     esac
@@ -373,7 +373,10 @@ deploy_submenu() {
     local sel=$1
     echo ""
     echo "╔══════════════════════════════════════╗"
-    echo "║            Deploy — v$APP_VERSION            ║"
+    local _left="           Deploy — v" _ver="$APP_VERSION"
+    local _pad=$(( 38 - ${#_left} - ${#_ver} ))
+    (( _pad < 0 )) && _pad=0
+    echo "║${_left}${_ver}$(printf '%*s' "$_pad" '')║"
     echo "╠══════════════════════════════════════╣"
     _ditem 0 $sel "1) Run tests"
     _ditem 1 $sel "2) Bump patch (v$APP_VERSION →)"
@@ -431,10 +434,7 @@ deploy_submenu() {
     echo "$msg" | git commit -F - 2>&1 | sed 's/^/  /'
     APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
     if ! grep -q '^## Unreleased' release-note.md; then
-      {
-        printf '## Unreleased\n\n'
-        awk '/^## /{if(++c>1)exit} 1' release-note.md
-      } > /tmp/release-note.md && mv /tmp/release-note.md release-note.md
+      printf '## Unreleased\n' > release-note.md
       echo "  New ## Unreleased section created."
     fi
   }

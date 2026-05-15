@@ -171,6 +171,32 @@
           "status": { "type": "string" },
           "url": { "type": "string", "format": "uri" }
         }
+      },
+      "ScreenshotItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "url": { "type": "string" },
+          "format": { "type": "string" },
+          "bytes": { "type": "integer", "nullable": true },
+          "status": { "type": "string" },
+          "is_baseline": { "type": "boolean" },
+          "baseline_id": { "type": "string", "format": "uuid", "nullable": true },
+          "diff_percentage": { "type": "number", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "completed_at": { "type": "string", "format": "date-time", "nullable": true },
+          "image_url": { "type": "string", "format": "uri", "nullable": true },
+          "options": { "type": "object", "nullable": true }
+        }
+      },
+      "ScreenshotsListResponse": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "offset": { "type": "integer" },
+          "limit": { "type": "integer" },
+          "screenshots": { "type": "array", "items": { "$ref": "#/components/schemas/ScreenshotItem" } }
+        }
       }
     }
   },
@@ -366,6 +392,41 @@
           },
           "404": {
             "description": "Not found",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+    "/v1/account/screenshots": {
+      "get": {
+        "summary": "List your screenshots",
+        "description": "Returns a paginated list of screenshots for the authenticated user.",
+        "tags": ["Account"],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0, "minimum": 0 },
+            "description": "Number of results to skip"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50, "maximum": 100 },
+            "description": "Max results to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated screenshot list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ScreenshotsListResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
           }
         }

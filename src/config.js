@@ -55,7 +55,7 @@ export default {
 
   adminEmail: process.env.ADMIN_EMAIL || '',
 
-  screenshotRetentionHours: parseInt(process.env.SCREENSHOT_RETENTION_HOURS || '1', 10),
+  screenshotRetentionHours: parseInt(process.env.SCREENSHOT_RETENTION_HOURS || '24', 10),
 
   tiers: {
     free: { monthlyLimit: 10, rateLimit: 5, windowMs: 60_000 },

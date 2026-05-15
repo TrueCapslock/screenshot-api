@@ -55,6 +55,10 @@ dev-menu.sh           Development menu (main entry for dev tasks)
 release-note.md       Versioned changelog + commit message source
 ```
 
+## Conventions
+- Always document all changes in `release-note.md` under `## Unreleased` as bullet points
+- Use past tense, present a short description of what was changed, why, and which files
+
 ## Release Workflow
 1. Add entries under `## Unreleased` in `release-note.md`
 2. Bump version via dev-menu (patch/minor/major) — renames `## Unreleased` → `## vX.Y.Z` in release-note.md + updates package.json

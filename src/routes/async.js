@@ -112,4 +112,41 @@ router.get('/screenshot/:id', async (req, res) => {
   res.json({ status: screenshot.status, job_id: screenshot.id });
 });
 
+router.post('/screenshot/:id/retry', async (req, res) => {
+  const screenshot = await db('screenshots')
+    .where({ id: req.params.id, api_key_id: req.apiKey.id, status: 'failed' })
+    .select('id', 'url', 'options')
+    .first();
+
+  if (!screenshot) {
+    return res.status(404).json({ error: 'not_found', message: 'Failed screenshot not found' });
+  }
+
+  const opts = typeof screenshot.options === 'string' ? JSON.parse(screenshot.options) : screenshot.options || {};
+
+  const [newScreenshot] = await db('screenshots')
+    .insert({
+      api_key_id: req.apiKey.id,
+      url: screenshot.url,
+      options: JSON.stringify(opts),
+      format: opts.format || 'png',
+      status: 'pending',
+    })
+    .returning('*');
+
+  await screenshotQueue.add('render', {
+    type: 'url',
+    options: opts,
+    apiKeyId: req.apiKey.id,
+    screenshotId: newScreenshot.id,
+    webhookUrl: opts.webhookUrl,
+  });
+
+  res.status(202).json({
+    job_id: newScreenshot.id,
+    status: 'pending',
+    url: `${config.baseUrl}/v1/screenshot/${newScreenshot.id}`,
+  });
+});
+
 export default router;

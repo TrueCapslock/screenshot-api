@@ -1,6 +1,6 @@
 # Screenshot API
 
-![CI](https://github.com/YOUR_USER/screenshot-api/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/TrueCapslock/screenshot-api/actions/workflows/ci.yml/badge.svg)
 
 A REST API that takes screenshots of any URL or renders HTML to images using headless Chromium. Built with Node.js + Playwright.
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { renderScreenshot, renderHtml } from '../services/renderer.js';
-import { saveFile } from '../services/storage.js';
+import { saveFile, deleteFile } from '../services/storage.js';
 import { getCached, setCache } from '../services/cache.js';
 import { auth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rateLimit.js';
@@ -14,16 +14,21 @@ const router = Router();
 
 router.use(auth, rateLimit);
 
-function unmarkExistingBaselines(userId, url, options) {
+async function unmarkExistingBaselines(userId, url, options) {
   const viewportWidth = options.mobile ? 390 : options.width || 1280;
   const viewportHeight = options.mobile ? 844 : options.height || 720;
-  return db('screenshots')
+  const oldBaselines = await db('screenshots')
     .whereIn('api_key_id', db('api_keys').select('id').where('user_id', userId))
     .where({ url, is_baseline: true })
     .whereRaw("(options->>'mobile')::boolean = ?", [!!options.mobile])
     .whereRaw("COALESCE((options->>'width')::int, 1280) = ?", [viewportWidth])
     .whereRaw("COALESCE((options->>'height')::int, 720) = ?", [viewportHeight])
-    .update({ is_baseline: false });
+    .select('id', 'storage_path');
+  if (oldBaselines.length > 0) {
+    const ids = oldBaselines.map((b) => b.id);
+    await db('screenshots').whereIn('id', ids).update({ is_baseline: false });
+  }
+  return oldBaselines;
 }
 
 const screenshotSchema = z.object({
@@ -101,7 +106,18 @@ router.post('/screenshot', logUsage, async (req, res) => {
     const storagePath = await saveFile(filename, result.buffer);
 
     if (options.baseline) {
-      await unmarkExistingBaselines(req.apiKey.userId, options.url, options);
+      const oldBaselines = await unmarkExistingBaselines(req.apiKey.userId, options.url, options);
+      for (const b of oldBaselines) {
+        if (b.storage_path) await deleteFile(b.storage_path).catch(() => {});
+      }
+      if (oldBaselines.length > 0) {
+        await db('screenshots')
+          .whereIn(
+            'id',
+            oldBaselines.map((b) => b.id),
+          )
+          .del();
+      }
     }
 
     const [screenshot] = await db('screenshots')
@@ -206,9 +222,38 @@ router.post('/screenshot/:id/baseline', async (req, res) => {
   }
 
   const opts = typeof screenshot.options === 'string' ? JSON.parse(screenshot.options) : screenshot.options || {};
-  await unmarkExistingBaselines(req.apiKey.userId, screenshot.url, opts);
+  const oldBaselines = await unmarkExistingBaselines(req.apiKey.userId, screenshot.url, opts);
+  for (const b of oldBaselines) {
+    if (b.storage_path) await deleteFile(b.storage_path).catch(() => {});
+  }
+  if (oldBaselines.length > 0) {
+    await db('screenshots')
+      .whereIn(
+        'id',
+        oldBaselines.map((b) => b.id),
+      )
+      .del();
+  }
   await db('screenshots').where({ id: screenshot.id }).update({ is_baseline: true });
   res.json({ message: 'Baseline set', id: screenshot.id });
+});
+
+router.delete('/screenshot/:id', async (req, res) => {
+  const screenshot = await db('screenshots')
+    .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
+    .where({ 'screenshots.id': req.params.id, 'api_keys.user_id': req.apiKey.userId })
+    .select('screenshots.id', 'screenshots.storage_path', 'screenshots.diff_storage_path')
+    .first();
+
+  if (!screenshot) {
+    return res.status(404).json({ error: 'not_found', message: 'Screenshot not found' });
+  }
+
+  if (screenshot.storage_path) await deleteFile(screenshot.storage_path).catch(() => {});
+  if (screenshot.diff_storage_path) await deleteFile(screenshot.diff_storage_path).catch(() => {});
+  await db('screenshots').where({ id: screenshot.id }).del();
+
+  res.json({ message: 'Screenshot deleted' });
 });
 
 export default router;

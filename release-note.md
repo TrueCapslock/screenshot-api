@@ -1,6 +1,26 @@
-## v1.0.13 (2026-05-15)
+## v1.0.14 (2026-05-15)
 
-- Menu: `_commit_from_release_note` now renames `## Unreleased` to versioned header before extracting, making commit menu (option 5) self-contained
-- Menu: fix awk commit message extraction — match specific version header instead of first `## v`, prevent old version content leaking into commit message
-- Menu: robust awk pattern for duplicate version headers (use `!flag &&` guard so duplicate headers trigger the stop rule instead of being consumed by `next`)
-- Menu: strip old versioned sections from release-note.md after creating new `## Unreleased` on commit
+- API: add `GET /v1/account/recent-urls` returning last 10 unique screenshot URLs per user
+- Dashboard: add autocomplete (`<datalist>`) to Try It URL input populated from recent-urls endpoint
+- Dashboard: add Desktop/Tablet/Mobile icon tags to screenshot list rows, determined from screenshot options
+- Admin: fix `adminRouter` — replace global `router.use(auth, admin)` with per-route middleware so routes mounted after it (compare, describe, session) are reachable for non-admin users
+- Admin: add `POST /admin/users/:id/keys` and `DELETE /admin/keys/:id` endpoints for admin key management
+- Dashboard: add API key management to admin user modal (view keys, create, revoke)
+- Dashboard: show screenshot retention notice below Screenshots heading, populated from server config
+- Dashboard: change language toggle labels from NO/EN to Norsk/English
+- Config: raise default `SCREENSHOT_RETENTION_HOURS` from 1 to 24
+- Cleanup: delete old baseline storage files and DB records immediately when a new baseline replaces them
+- Dev menu: strip old versioned sections from release-note.md after commit (only `## Unreleased` remains)
+- Dev menu: remove duplicate "Press any key" prompt after status option
+- Account: expose `screenshot_retention_hours` in `/v1/account` response
+- AGENTS.md: add conventions section documenting that all changes must be added to release-note.md
+- Tests: fix auth mock call counts in compare.test.js and session.test.js after adminRouter change
+- API: add `DELETE /v1/screenshot/:id` endpoint to delete individual screenshots
+- API: add `POST /v1/screenshot/:id/retry` endpoint to re-queue failed async screenshots
+- API: add pagination (`offset`/`limit`) to `GET /v1/account/screenshots`
+- API: expose `monthly_limit`, `rate_limit`, and `screenshot_retention_hours` in `/v1/account`
+- Dashboard: add paginated screenshots list with "Load more" button
+- Dashboard: add Delete button to each screenshot row
+- Dashboard: show pending/failed status with Retry button for async screenshots
+- Dashboard: show `last_used_at` date for each API key
+- Dashboard: show rate limit (e.g. "5 req/60s") in account section

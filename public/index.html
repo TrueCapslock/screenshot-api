@@ -255,6 +255,7 @@
         <div class="row"><span class="label" data-i18n="apiUsage">API requests</span><span class="value"><span id="accUsage">0</span></span></div>
         <div class="row"><span class="label" data-i18n="screenshotsCount">Screenshots captured</span><span class="value"><span id="accScreenshotsCount">0</span></span></div>
         <div class="row"><span class="label" data-i18n="monthlyLimit">Monthly limit</span><span class="value"><span id="accLimit">25</span></span></div>
+        <div class="row"><span class="label">Rate limit</span><span class="value"><span id="accRateLimit">-</span></span></div>
         <div class="usage-bar"><div class="usage-bar-fill" id="usageBarFill" style="width:0%"></div></div>
         <div id="subStatus" style="margin-top:12px;"></div>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -264,44 +265,7 @@
 
       <div class="card" id="pricingSection">
         <h2 data-i18n="plans">Plans</h2>
-        <div id="plansContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px;">
-          <div class="plan-card" data-tier="free" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
-            <h3 style="font-size:16px;margin-bottom:4px;">Free</h3>
-            <div style="font-size:24px;font-weight:700;">$0</div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-            <div style="font-size:13px;color:#666;">10 <span data-i18n="screenshots">screenshots</span></div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;">5 <span data-i18n="reqMin">req/min</span></div>
-            <button class="btn btn-secondary btn-sm" disabled style="opacity:0.5;cursor:default;" data-i18n="current">Current</button>
-          </div>
-          <div class="plan-card" data-tier="starter" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
-            <h3 style="font-size:16px;margin-bottom:4px;">Starter</h3>
-            <div style="font-size:24px;font-weight:700;">$9</div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-            <div style="font-size:13px;color:#666;">500 <span data-i18n="screenshots">screenshots</span></div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;">60 <span data-i18n="reqMin">req/min</span></div>
-            <button class="btn btn-primary btn-sm" onclick="subscribe('starter')" data-i18n="subscribe">Subscribe</button>
-          </div>
-          <div class="plan-card popular" data-tier="pro" style="border:2px solid #0066ff;border-radius:8px;padding:16px;text-align:center;position:relative;overflow:hidden;">
-            <div class="ribbon"><span data-i18n="popular">POPULAR</span></div>
-            <h3 style="font-size:16px;margin-bottom:4px;">Pro</h3>
-            <div style="font-size:24px;font-weight:700;">$29</div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-            <div style="font-size:13px;color:#666;">2,500 <span data-i18n="screenshots">screenshots</span></div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;">250 <span data-i18n="reqMin">req/min</span></div>
-            <button class="btn btn-primary btn-sm" onclick="subscribe('pro')" data-i18n="subscribe">Subscribe</button>
-          </div>
-          <div class="plan-card" data-tier="business" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
-            <h3 style="font-size:16px;margin-bottom:4px;">Business</h3>
-            <div style="font-size:24px;font-weight:700;">$99</div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-            <div style="font-size:13px;color:#666;">15,000 <span data-i18n="screenshots">screenshots</span></div>
-            <div style="font-size:13px;color:#666;margin-bottom:12px;">1,000 <span data-i18n="reqMin">req/min</span></div>
-            <button class="btn btn-primary btn-sm" onclick="subscribe('business')" data-i18n="subscribe">Subscribe</button>
-          </div>
-        </div>
-        <p style="margin-top:12px;font-size:13px;color:#999;text-align:center;" data-i18n="stripeNote">
-          Stripe price IDs must be configured in .env for subscriptions to work.
-        </p>
+        <div id="plansContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px;"><div class="empty" data-i18n="loading">Loading...</div></div>
       </div>
 
       <div class="card">
@@ -335,7 +299,8 @@
         <div id="tryUrlSection">
           <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;" data-i18n="tryItDesc">Test the API by taking a screenshot of any URL.</p>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="testUrl" placeholder="https://example.com" style="flex:1;min-width:100px;">
+            <input type="text" id="testUrl" placeholder="https://example.com" list="recentUrls" style="flex:1;min-width:100px;">
+            <datalist id="recentUrls"></datalist>
             <select id="testFormat" style="width:90px;padding:6px 10px;border-radius:6px;font-size:14px;flex-shrink:0;">
               <option value="png">PNG</option>
               <option value="jpeg">JPEG</option>
@@ -383,10 +348,19 @@
               <option value="jpeg">JPEG</option>
               <option value="webp">WebP</option>
             </select>
-            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);">
+            <label style="display:flex;align-items:center;gap:4px;">
+              <span data-i18n="resolution">Resolution</span>
+              <select id="testHtmlResolution" onchange="toggleHtmlResolution()" style="padding:4px 6px;border-radius:4px;font-size:13px;">
+                <option value="desktop">Desktop (1280×720)</option>
+                <option value="tablet">Tablet (768×1024)</option>
+                <option value="mobile">Mobile (390×844)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <label id="testHtmlWidthLabel" style="display:flex;align-items:center;gap:4px;display:none;">
               <span data-i18n="width">Width</span> <input type="number" id="testHtmlWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
             </label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);">
+            <label id="testHtmlHeightLabel" style="display:flex;align-items:center;gap:4px;display:none;">
               <span data-i18n="height">Height</span> <input type="number" id="testHtmlHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
             </label>
             <button class="btn btn-primary btn-sm" onclick="testHtmlRender()" data-i18n="render">Render</button>
@@ -397,6 +371,7 @@
 
       <div class="card">
         <h2 style="margin:0;display:flex;align-items:center;gap:6px;"><span data-i18n="screenshots">Screenshots</span> <span id="screenshotCountBadge" class="count-badge" style="display:none;">0</span></h2>
+        <p style="margin:4px 0 0;font-size:12px;color:var(--text-muted);">Stored for <span id="retentionHours">24</span> hours, then auto-deleted</p>
         <div id="screenshotsList" style="margin-top:12px;">
           <div class="empty" data-i18n="loading">Loading...</div>
         </div>
@@ -635,12 +610,17 @@ async function loadAccount() {
     document.getElementById('accUsage').textContent = data.usage;
     document.getElementById('dashTabBtnAdmin').style.display = data.user.is_admin ? '' : 'none';
     if (data.user.is_admin) loadAdminUsers();
+    document.getElementById('retentionHours').textContent = data.screenshot_retention_hours || 24;
 
     const tier = data.user.tier;
     const limits = { free: 10, starter: 500, pro: 2500, business: 15000 };
     const limit = limits[tier] || 25;
-    document.getElementById('accLimit').textContent = limit;
-    document.getElementById('usageBarFill').style.width = Math.min(100, (data.usage / limit) * 100) + '%';
+    document.getElementById('accLimit').textContent = data.monthly_limit || limit;
+    document.getElementById('usageBarFill').style.width = Math.min(100, (data.usage / (data.monthly_limit || limit)) * 100) + '%';
+
+    if (data.rate_limit) {
+      document.getElementById('accRateLimit').textContent = data.rate_limit.limit + ' req/' + (data.rate_limit.window_ms / 1000) + 's';
+    }
 
     api('/v1/account/screenshots').then(r => r.ok && r.json()).then(d => {
       if (d) {
@@ -658,6 +638,7 @@ async function loadAccount() {
       : '<span style="font-size:13px;color:#999;">' + t('onFreeTier') + '</span>';
 
     document.getElementById('pricingSection').style.display = hasSub ? 'none' : 'block';
+    if (!hasSub) loadPrices();
 
     const badge = document.getElementById('tierDisplay');
     badge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
@@ -666,6 +647,13 @@ async function loadAccount() {
     updateCompareUI();
 
     renderKeys(data.keys);
+
+    api('/v1/account/recent-urls').then(r => r.ok && r.json()).then(d => {
+      if (d && d.urls) {
+        const datalist = document.getElementById('recentUrls');
+        datalist.innerHTML = d.urls.map(u => `<option value="${esc(u)}">`).join('');
+      }
+    }).catch(() => {});
   } catch (e) {
     showToast(t('loadFailed'), 'error');
   }
@@ -699,11 +687,13 @@ function renderKeys(keys) {
   try { stored = JSON.parse(localStorage.getItem('storedKeys') || '{}'); } catch {}
   list.innerHTML = keys.map(k => {
     const full = stored[k.key_prefix];
+    const dateLocale = currentLang === 'nb' ? 'nb' : 'en';
+    const lastUsed = k.last_used_at ? new Date(k.last_used_at).toLocaleDateString(dateLocale) : t('never');
     return `
     <div class="key-row clickable" onclick="activateKeyRow('${esc(k.key_prefix)}','${esc(k.name)}')">
       <div class="key-info">
         <div class="key-name">${esc(k.name)}${k.key_prefix === activePrefix ? ' <span style="font-size:11px;color:var(--primary);font-weight:600;">(active)</span>' : ''}</div>
-        <div class="key-prefix">${esc(k.key_prefix)}...${k.active ? '' : ' ' + t('inactive')}</div>
+        <div class="key-prefix">${esc(k.key_prefix)}... &middot; ${t('lastUsed')}: ${lastUsed}${k.active ? '' : ' &middot; ' + t('inactive')}</div>
       </div>
       <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();revokeKey('${k.id}')">${t('revoke')}</button>
     </div>
@@ -785,6 +775,45 @@ async function portal() {
   }
 }
 
+function formatPrice(amount, currency) {
+  if (currentLang === 'nb') {
+    if (currency === 'nok') return (amount / 100).toLocaleString('nb', { style: 'currency', currency: 'NOK' });
+    return (amount / 100).toLocaleString('nb', { style: 'currency', currency: 'USD' });
+  }
+  return (amount / 100).toLocaleString('en', { style: 'currency', currency: currency || 'USD' });
+}
+
+async function loadPrices() {
+  const container = document.getElementById('plansContainer');
+  try {
+    const res = await api('/v1/stripe/prices');
+    if (!res.ok) { container.innerHTML = ''; return; }
+    const data = await res.json();
+    if (!data.prices || data.prices.length === 0) { container.innerHTML = ''; return; }
+    const userTier = (userData && userData.user && userData.user.tier) || 'free';
+    container.innerHTML = data.prices.map(p => {
+      const isPopular = p.tier === 'pro';
+      const isCurrent = p.tier === userTier;
+      const currency = p.tier === 'free' && currentLang === 'nb' ? 'nok' : (p.currency || 'usd');
+      const price = formatPrice(p.amount, currency);
+      return '<div class="plan-card' + (isPopular ? ' popular' : '') + '" style="border' + (isPopular ? ':2px solid #0066ff' : ':1px solid var(--plan-border)') + ';border-radius:8px;padding:16px;text-align:center;position:relative;overflow:hidden;">' +
+        (isPopular ? '<div class="ribbon"><span data-i18n="popular">POPULAR</span></div>' : '') +
+        '<h3 style="font-size:16px;margin-bottom:4px;text-transform:capitalize;">' + p.tier + '</h3>' +
+        '<div style="font-size:24px;font-weight:700;">' + price + '</div>' +
+        '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">' + t('perMonth') + '</div>' +
+        '<div style="font-size:13px;color:var(--text-secondary);">' + p.screenshots + ' <span data-i18n="screenshots">screenshots</span></div>' +
+        '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">' + p.reqMin + ' <span data-i18n="reqMin">req/min</span></div>' +
+        (isCurrent
+          ? '<button class="btn btn-secondary btn-sm" disabled style="opacity:0.5;cursor:default;" data-i18n="current">Current</button>'
+          : '<button class="btn btn-primary btn-sm" onclick="subscribe(\'' + p.tier + '\')" data-i18n="subscribe">Subscribe</button>') +
+      '</div>';
+    }).join('');
+    applyLanguage();
+  } catch {
+    container.innerHTML = '';
+  }
+}
+
 function applyTheme(theme) {
   const root = document.getElementById('htmlRoot');
   const btn = document.getElementById('themeBtn');
@@ -808,6 +837,8 @@ function toggleTheme() {
 })();
 
 const _screenshotMeta = new Map();
+let _screenshotsOffset = 0;
+const _adminNewKeys = {};
 
 let _modalState = { id: null, baselineUrl: null, screenshotUrl: null, diffUrl: null };
 
@@ -1031,6 +1062,38 @@ async function setBaseline(id) {
   return false;
 }
 
+async function deleteScreenshot(id) {
+  if (!confirm('Delete this screenshot?')) return false;
+  try {
+    const res = await api('/v1/screenshot/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Screenshot deleted', 'success');
+      loadScreenshots();
+    } else {
+      const d = await res.json();
+      showToast(d.message || 'Delete failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+  return false;
+}
+
+async function retryScreenshot(id) {
+  try {
+    const res = await api('/v1/screenshot/' + id + '/retry', { method: 'POST' });
+    if (res.ok) {
+      showToast('Retry submitted', 'success');
+      loadScreenshots();
+    } else {
+      showToast('Retry failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+  return false;
+}
+
 function switchDashboardTab(tab) {
   document.querySelectorAll('#dashboardTabBar .tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('dashTabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
@@ -1044,36 +1107,47 @@ async function toggleScreenshots() {
   document.getElementById('screenshotsList').scrollIntoView({ behavior: 'smooth' });
 }
 
-async function loadScreenshots() {
+async function loadScreenshots(more) {
   const list = document.getElementById('screenshotsList');
-  list.innerHTML = '<div class="empty">' + t('loading') + '</div>';
+  if (!more) {
+    _screenshotsOffset = 0;
+    list.innerHTML = '<div class="empty">' + t('loading') + '</div>';
+  }
   try {
-    const res = await api('/v1/account/screenshots');
+    const res = await api('/v1/account/screenshots?offset=' + _screenshotsOffset + '&limit=20');
     if (!res.ok) { list.innerHTML = '<div class="empty">' + t('loadFailed') + '</div>'; return; }
     const data = await res.json();
-    if (!data.screenshots || data.screenshots.length === 0) {
+    if (!more) list.innerHTML = '';
+    if (data.screenshots.length === 0 && !more) {
       list.innerHTML = '<div class="empty" data-i18n="noScreenshots">No screenshots yet.</div>';
       applyLanguage();
       return;
     }
-    list.innerHTML = data.screenshots.map(s => {
+    const rows = data.screenshots.map(s => {
       const date = new Date(s.created_at).toLocaleString();
       const size = s.bytes ? (s.bytes / 1024).toFixed(1) + ' KB' : '-';
       const urlLabel = s.url === 'html://inline' ? 'HTML Render' : esc(s.url);
-      let badges = '';
+      const device = deviceTag(s.options);
+      let badges = device;
       if (s.is_baseline) badges += '<span style="font-size:11px;background:#1a3a2a;color:#8bc99b;padding:1px 6px;border-radius:4px;margin-left:4px;">BASELINE</span>';
       if (s.diff_percentage !== null) badges += '<span style="font-size:11px;background:' + (s.diff_percentage > 0.1 ? '#3a1a1a;color:#f0a0a0' : '#1a2a3a;color:#8bb8f0') + ';padding:1px 6px;border-radius:4px;margin-left:4px;">' + s.diff_percentage + '% diff</span>';
       _screenshotMeta.set(s.id, { hasDiff: s.diff_percentage !== null, url: s.url, hasBaseline: s.baseline_id !== null || s.is_baseline });
       let actions = '';
       if (s.status === 'completed') {
-        actions = '<div style="display:flex;gap:4px;">';
+        actions = '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
         actions += '<a href="#" onclick="return previewScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="viewScreenshot">View</a>';
         actions += '<a href="#" onclick="return downloadScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="downloadScreenshot">Download</a>';
         if (!s.is_baseline) actions += '<a href="#" onclick="return setBaseline(\'' + s.id + '\')" class="btn btn-secondary btn-sm" style="font-size:11px;">Set Baseline</a>';
         if (s.diff_percentage !== null) actions += '<a href="#" onclick="return viewDiff(\'' + s.id + '\')" class="btn btn-secondary btn-sm" style="font-size:11px;">View Diff</a>';
+        actions += '<a href="#" onclick="return deleteScreenshot(\'' + s.id + '\')" class="btn btn-danger btn-sm" style="font-size:11px;">Delete</a>';
         actions += '</div>';
       } else {
-        actions = '<span class="label">' + s.status + '</span>';
+        const statusColors = { pending: '#f0ad4e', processing: '#5bc0de', failed: '#dc3545' };
+        const color = statusColors[s.status] || '#999';
+        actions = '<span style="color:' + color + ';font-weight:600;">' + s.status + '</span>';
+        if (s.status === 'failed') {
+          actions += ' <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="retryScreenshot(\'' + s.id + '\')">Retry</button>';
+        }
       }
       return '<div class="screenshot-row">' +
         '<div class="screenshot-info">' +
@@ -1082,6 +1156,16 @@ async function loadScreenshots() {
         '</div>' + actions +
       '</div>';
     }).join('');
+    if (more) {
+      document.getElementById('screenshotsLoadMore').remove();
+    } else {
+      list.innerHTML = '';
+    }
+    list.insertAdjacentHTML('beforeend', rows);
+    _screenshotsOffset = data.offset + data.screenshots.length;
+    if (_screenshotsOffset < data.total) {
+      list.insertAdjacentHTML('beforeend', '<div id="screenshotsLoadMore" style="text-align:center;padding:12px;"><button class="btn btn-secondary btn-sm" onclick="loadScreenshots(true)">Load more (' + (data.total - _screenshotsOffset) + ' remaining)</button></div>');
+    }
     applyLanguage();
   } catch (e) {
     list.innerHTML = '<div class="empty">' + t('networkError') + '</div>';
@@ -1107,12 +1191,31 @@ function switchTryTab(tab) {
   }
 }
 
+function toggleHtmlResolution() {
+  const sel = document.getElementById('testHtmlResolution').value;
+  document.getElementById('testHtmlWidthLabel').style.display = sel === 'custom' ? 'flex' : 'none';
+  document.getElementById('testHtmlHeightLabel').style.display = sel === 'custom' ? 'flex' : 'none';
+}
+
 async function testHtmlRender() {
   const html = document.getElementById('testHtml').value;
   if (!html) return showToast(t('enterHtml'), 'error');
   const format = document.getElementById('testHtmlFormat').value;
-  const width = parseInt(document.getElementById('testHtmlWidth').value, 10) || 1280;
-  const height = parseInt(document.getElementById('testHtmlHeight').value, 10) || 720;
+  const resolution = document.getElementById('testHtmlResolution').value;
+  let width, height;
+  if (resolution === 'mobile') {
+    width = 390;
+    height = 844;
+  } else if (resolution === 'tablet') {
+    width = 768;
+    height = 1024;
+  } else if (resolution === 'custom') {
+    width = parseInt(document.getElementById('testHtmlWidth').value, 10) || 1280;
+    height = parseInt(document.getElementById('testHtmlHeight').value, 10) || 720;
+  } else {
+    width = 1280;
+    height = 720;
+  }
   const result = document.getElementById('testResult');
   result.innerHTML = '<p style="color:#666;">' + t('rendering') + '</p>';
   try {
@@ -1291,8 +1394,10 @@ const LANG = {
     keyNamePlaceholder: 'e.g. Production',
     cookieSelectorPlaceholder: 'Custom selector (optional)',
     noKeys: 'No API keys yet. Create one above.',
+    lastUsed: 'last used',
     keyRevoked: 'Key revoked',
     keyCreated: 'Key created! Copy it now.',
+    never: 'never',
     keyRequired: 'Name is required',
     emailRequired: 'Email is required',
     enterUrl: 'Enter a URL',
@@ -1382,6 +1487,8 @@ const LANG = {
     keyNamePlaceholder: 'f.eks. Produksjon',
     cookieSelectorPlaceholder: 'Egendefinert velger (valgfritt)',
     noKeys: 'Ingen API-nøkler ennå. Opprett en over.',
+    never: 'aldri',
+    lastUsed: 'sist brukt',
     keyRevoked: 'Nøkkel tilbakekalt',
     keyCreated: 'Nøkkel opprettet! Kopier den nå.',
     keyRequired: 'Navn er påkrevd',
@@ -1434,7 +1541,7 @@ function applyLanguage() {
     el.setAttribute('placeholder', t(key));
   });
   document.title = t('pageTitle');
-  document.getElementById('langBtn').textContent = currentLang === 'nb' ? 'EN' : 'NO';
+  document.getElementById('langBtn').textContent = currentLang === 'nb' ? 'English' : 'Norsk';
   document.getElementById('htmlRoot').setAttribute('lang', currentLang);
   localStorage.setItem('lang', currentLang);
 }
@@ -1511,6 +1618,18 @@ async function viewAdminUser(id) {
     const data = await res.json();
     const u = data.user;
     title.textContent = esc(u.email);
+    const keys = data.keys || [];
+    const keysHtml = keys.length
+      ? '<table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:8px;"><tr style="color:var(--text-secondary);font-size:11px;"><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border-light);">Name</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border-light);">Prefix</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border-light);">Status</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border-light);">Created</th><th style="padding:4px 6px;border-bottom:1px solid var(--border-light);"></th></tr>' +
+        keys.map(k =>
+          '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--border-light);">' + esc(k.name) + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--border-light);font-family:monospace;font-size:11px;word-break:break-all;max-width:300px;">' + (_adminNewKeys[k.key_prefix] ? esc(_adminNewKeys[k.key_prefix]) : esc(k.key_prefix) + '...') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--border-light);">' + (k.active ? '<span style="color:var(--success);">active</span>' : '<span style="color:var(--text-muted);">inactive</span>') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--border-light);">' + new Date(k.created_at).toLocaleDateString() + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--border-light);"><button class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 8px;" onclick="adminRevokeKey(\'' + k.id + '\',\'' + u.id + '\')">Revoke</button></td></tr>'
+        ).join('') + '</table>'
+      : '<p style="color:var(--text-muted);font-size:13px;">No API keys</p>';
+
     body.innerHTML = `
       <div style="margin-bottom:16px;">
         <div class="field">
@@ -1530,6 +1649,13 @@ async function viewAdminUser(id) {
             <option value="business" ${u.tier === 'business' ? 'selected' : ''}>Business</option>
           </select>
         </div>
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-size:13px;font-weight:600;">API Keys</label>
+          <button class="btn btn-primary btn-sm" onclick="adminCreateKey('${u.id}')">+ Create Key</button>
+        </div>
+        <div id="adminKeysContainer">${keysHtml}</div>
+        <div id="adminNewKeyResult" style="margin-top:8px;"></div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
         <button class="btn btn-primary btn-sm" onclick="saveAdminUser('${u.id}')">Save Changes</button>
@@ -1578,8 +1704,55 @@ async function deleteAdminUser(id) {
   }
 }
 
+async function adminCreateKey(userId) {
+  const name = prompt('Name for the new API key:');
+  if (!name) return;
+  try {
+    const res = await api('/v1/admin/users/' + userId + '/keys', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      _adminNewKeys[data.prefix] = data.key;
+      const container = document.getElementById('adminNewKeyResult');
+      container.innerHTML = '<div style="background:var(--code-bg);border-radius:4px;padding:8px 12px;font-family:monospace;font-size:12px;word-break:break-all;margin-top:8px;">' + esc(data.key) + '</div><p style="font-size:12px;color:var(--danger);margin-top:4px;">Save this key — it will not be shown again</p>';
+      viewAdminUser(userId);
+    } else {
+      const d = await res.json();
+      showToast(d.message || 'Failed to create key', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+}
+
+async function adminRevokeKey(keyId, userId) {
+  if (!confirm('Revoke this API key?')) return;
+  try {
+    const res = await api('/v1/admin/keys/' + keyId, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Key revoked', 'success');
+      viewAdminUser(userId);
+    } else {
+      showToast('Failed to revoke key', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+}
+
 function closeAdminModal() {
   document.getElementById('adminUserModal').style.display = 'none';
+}
+
+function deviceTag(options) {
+  let label, color, bg;
+  if (!options) { label = 'Desktop'; bg = '#2a2a3a'; color = '#b0b0d0'; }
+  else if (options.mobile) { label = 'Mobile'; bg = '#2a3a2a'; color = '#90d090'; }
+  else if (options.width === 768 && options.height === 1024) { label = 'Tablet'; bg = '#2a3a3a'; color = '#90d0d0'; }
+  else { label = 'Desktop'; bg = '#2a2a3a'; color = '#b0b0d0'; }
+  return '<span style="font-size:11px;background:' + bg + ';color:' + color + ';padding:1px 6px;border-radius:4px;margin-right:4px;white-space:nowrap;">' + label + '</span>';
 }
 
 function esc(s) { return String(s).replace(/[&<>"']/g, ''); }

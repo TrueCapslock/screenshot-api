@@ -46,9 +46,9 @@ const mockRow = {
 };
 
 // Routers mounted before sessionRouter with router.use(auth):
-// accountRouter, keysRouter, screenshotRouter, asyncRouter, adminRouter = 5 routers
+// accountRouter, keysRouter, screenshotRouter, asyncRouter = 4 routers
 // Each auth middleware makes 2 first() calls for x-session-token, 1 for x-api-key
-const AUTH_FIRST_CALLS = 10;
+const AUTH_FIRST_CALLS = 8;
 
 let app;
 
