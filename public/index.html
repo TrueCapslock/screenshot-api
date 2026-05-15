@@ -170,8 +170,9 @@
   .modal-body { flex:1;overflow:auto;padding:20px;text-align:center;min-height:300px;display:flex;align-items:center;justify-content:center; }
   .modal-body img { max-width:100%;max-height:65vh;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.15); }
 
-  .img-comp-container { position:relative;display:inline-block;max-width:100%;min-height:200px;overflow:hidden;user-select:none;vertical-align:top; }
-  .img-comp-baseline { display:block;max-width:100%;height:auto;border-radius:4px; }
+  .img-comp-container { position:relative;display:inline-block;max-width:100%;min-height:200px;overflow:hidden;user-select:none;vertical-align:top;border-radius:4px; }
+  .img-comp-container img { max-width:none;max-height:none;box-shadow:none;border-radius:0; }
+  .img-comp-baseline { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:left top; }
   .img-comp-overlay { position:absolute;top:0;left:0;width:50%;height:100%;overflow:hidden; }
   .img-comp-overlay img { display:block;width:100%;height:100%;object-fit:cover;object-position:left top; }
   .img-comp-slider { position:absolute;top:0;left:50%;width:4px;height:100%;background:var(--primary);cursor:ew-resize;z-index:10; }
@@ -950,6 +951,38 @@ function initSlider() {
   const slider = document.getElementById('imgCompSlider');
 
   if (!container || !overlay || !slider) return;
+
+  const baselineImg = document.getElementById('imgCompBaselineImg');
+  const screenshotImg = document.getElementById('imgCompScreenshotImg');
+
+  if (baselineImg && screenshotImg) {
+    const waitImage = img => new Promise(r => {
+      if (img.complete && img.naturalWidth) r(img);
+      else {
+        img.onload = () => r(img);
+        img.onerror = () => r(img);
+      }
+    });
+    const loadSize = url => new Promise(r => {
+      if (!url) { r(null); return; }
+      const img = new Image();
+      img.onload = () => r({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => r(null);
+      img.src = url;
+    });
+
+    Promise.all([waitImage(baselineImg), waitImage(screenshotImg), loadSize(_modalState.diffUrl)]).then(([, , diffSize]) => {
+      const width = diffSize?.width || Math.max(baselineImg.naturalWidth, screenshotImg.naturalWidth);
+      const height = diffSize?.height || Math.min(baselineImg.naturalHeight, screenshotImg.naturalHeight);
+      const body = document.getElementById('modalBody');
+      const maxWidth = Math.max(200, (body?.clientWidth || window.innerWidth) - 80);
+      const maxHeight = Math.max(200, window.innerHeight * 0.65);
+      const scale = Math.min(1, maxWidth / width, maxHeight / height);
+      container.style.width = Math.round(width * scale) + 'px';
+      container.style.height = Math.round(height * scale) + 'px';
+      container.style.minHeight = '0';
+    });
+  }
 
   let dragging = false;
 

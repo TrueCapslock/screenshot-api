@@ -105,11 +105,11 @@ router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
     ]);
 
     const width = Math.max(baselineMeta.width, currentMeta.width);
-    const height = Math.max(baselineMeta.height, currentMeta.height);
+    const height = Math.min(baselineMeta.height, currentMeta.height);
 
     const [baselineRgba, currentRgba] = await Promise.all([
-      sharp(baselineBuffer).resize(width, height, { fit: 'fill' }).ensureAlpha().raw().toBuffer(),
-      sharp(result.buffer).resize(width, height, { fit: 'fill' }).ensureAlpha().raw().toBuffer(),
+      sharp(baselineBuffer).resize(width, height, { fit: 'cover', position: 'top' }).ensureAlpha().raw().toBuffer(),
+      sharp(result.buffer).resize(width, height, { fit: 'cover', position: 'top' }).ensureAlpha().raw().toBuffer(),
     ]);
 
     const diffRgba = new Uint8Array(width * height * 4);
