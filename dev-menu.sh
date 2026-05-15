@@ -414,11 +414,12 @@ deploy_submenu() {
       echo "release-note.md not found, skipping commit."
       return
     fi
-    local msg
+    local ver msg
+    ver=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
     if grep -q '^## Unreleased' release-note.md; then
       msg=$(awk '/^## Unreleased/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
     else
-      msg=$(awk '/^## v/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
+      msg=$(awk "/^## v${ver//./\\.}/{flag=1; next} /^## / && flag{flag=0} flag" release-note.md | sed '/./,$!d')
     fi
     if [ -z "$msg" ]; then
       echo "No entries to commit in release-note.md, skipping commit."

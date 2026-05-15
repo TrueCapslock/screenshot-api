@@ -1,4 +1,6 @@
-## v1.0.9 (2026-05-15)
+## Unreleased
+
+- Fixed some issues with commit messages
 
 ## v1.0.7 (2026-05-15)
 
