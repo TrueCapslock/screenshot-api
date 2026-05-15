@@ -36,7 +36,7 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use('/docs', express.static(join(__dirname, '..', 'public')));
 app.use('/docs/api', swaggerUi.serve, (req, res, next) => {
-  const spec = { ...openapiSpec, servers: [{ url: `${req.protocol}://${req.get('host')}`, description: 'Server' }] };
+  const spec = { ...openapiSpec, servers: [{ url: '/', description: 'Server' }] };
   swaggerUi.setup(spec, { customSiteTitle: 'Screenshot API Docs' })(req, res, next);
 });
 

@@ -16,7 +16,7 @@ if (dsn) {
     release: `screenshot-api@${pkg.version}`,
     sendDefaultPii: true,
     integrations: [
-      Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+      Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
     ],
     enableLogs: true,
   });
