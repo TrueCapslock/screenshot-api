@@ -96,7 +96,6 @@ router.get('/verify-magic', async (req, res) => {
   await db('magic_tokens').where({ id: matched.id }).update({ used: true });
 
   const user = await db('users').where({ email: email.toLowerCase().trim() }).first();
-  const keys = await db('api_keys').where({ user_id: user.id, active: true }).select('id', 'key_prefix', 'name', 'created_at');
 
   const rawKey = `sk_${crypto.randomBytes(32).toString('hex')}`;
   const keyPrefix = rawKey.slice(0, 8);

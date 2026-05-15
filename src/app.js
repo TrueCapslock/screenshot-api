@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -23,17 +22,17 @@ app.use((_req, res, next) => {
 });
 
 app.get('/', (req, res) => res.redirect('/docs'));
+app.get('/account', (req, res) => {
+  const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect('/docs' + qs);
+});
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use('/docs', express.static(join(__dirname, '..', 'public')));
-app.use(
-  '/docs/api',
-  swaggerUi.serve,
-  (req, res, next) => {
-    const spec = { ...openapiSpec, servers: [{ url: `${req.protocol}://${req.get('host')}`, description: 'Server' }] };
-    swaggerUi.setup(spec, { customSiteTitle: 'Screenshot API Docs' })(req, res, next);
-  },
-);
+app.use('/docs/api', swaggerUi.serve, (req, res, next) => {
+  const spec = { ...openapiSpec, servers: [{ url: `${req.protocol}://${req.get('host')}`, description: 'Server' }] };
+  swaggerUi.setup(spec, { customSiteTitle: 'Screenshot API Docs' })(req, res, next);
+});
 
 app.use('/v1/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '5mb' }));

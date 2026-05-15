@@ -185,6 +185,7 @@ docker_submenu() {
   }
 
   _draw_docker_menu() {
+    clear
     local sel=$1
     echo ""
     echo "╔══════════════════════════════════════╗"
@@ -266,6 +267,7 @@ dev_submenu() {
   }
 
   _draw_dev_menu() {
+    clear
     local sel=$1
     echo ""
     echo "╔══════════════════════════════════════╗"
@@ -367,6 +369,7 @@ deploy_submenu() {
   }
 
   _draw_deploy_menu() {
+    clear
     local sel=$1
     echo ""
     echo "╔══════════════════════════════════════╗"
@@ -428,7 +431,10 @@ deploy_submenu() {
     echo "$msg" | git commit -F - 2>&1 | sed 's/^/  /'
     APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
     if ! grep -q '^## Unreleased' release-note.md; then
-      printf '## Unreleased\n\n' | cat - release-note.md > /tmp/release-note.md && mv /tmp/release-note.md release-note.md
+      {
+        printf '## Unreleased\n\n'
+        awk '/^## /{if(++c>1)exit} 1' release-note.md
+      } > /tmp/release-note.md && mv /tmp/release-note.md release-note.md
       echo "  New ## Unreleased section created."
     fi
   }
@@ -490,6 +496,7 @@ menu() {
   }
 
   _draw_menu() {
+    clear
     local sel=$1
     echo ""
     echo "╔══════════════════════════════════════╗"

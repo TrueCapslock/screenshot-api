@@ -35,7 +35,9 @@ const compareSchema = z.object({
 
 router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
   if (!req.isAdmin && req.tier !== 'pro' && req.tier !== 'business') {
-    return res.status(403).json({ error: 'forbidden', message: 'Comparison is only available on Pro and Business tiers' });
+    return res
+      .status(403)
+      .json({ error: 'forbidden', message: 'Comparison is only available on Pro and Business tiers' });
   }
 
   const parsed = compareSchema.safeParse(req.body);

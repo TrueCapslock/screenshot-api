@@ -8,7 +8,9 @@ const router = Router();
 
 router.get('/screenshot/:id/describe', auth, async (req, res) => {
   if (!config.geminiApiKey) {
-    return res.status(400).json({ error: 'GEMINI_API_KEY not configured. Get a free key at https://aistudio.google.com/apikey' });
+    return res
+      .status(400)
+      .json({ error: 'GEMINI_API_KEY not configured. Get a free key at https://aistudio.google.com/apikey' });
   }
 
   try {
@@ -45,26 +47,33 @@ router.get('/screenshot/:id/describe', auth, async (req, res) => {
     const mime = screenshot.format === 'jpeg' ? 'image/jpeg' : 'image/png';
 
     const body = {
-      contents: [{
-        parts: [
-          { text: 'You are a UI testing tool. Compare these two screenshots (baseline = left/before, current = right/after). Describe ONLY the visual differences in 1-3 concise bullet points. Focus on layout shifts, color changes, new/hidden elements, text changes, and position changes. Be specific about locations (header, footer, sidebar, main content, etc.). If they are identical, say "No visual differences detected."' },
-          { inline_data: { mime_type: mime, data: baselineB64 } },
-          { inline_data: { mime_type: mime, data: currentB64 } },
-        ],
-      }],
+      contents: [
+        {
+          parts: [
+            {
+              text: 'You are a UI testing tool. Compare these two screenshots (baseline = left/before, current = right/after). Describe ONLY the visual differences in 1-3 concise bullet points. Focus on layout shifts, color changes, new/hidden elements, text changes, and position changes. Be specific about locations (header, footer, sidebar, main content, etc.). If they are identical, say "No visual differences detected."',
+            },
+            { inline_data: { mime_type: mime, data: baselineB64 } },
+            { inline_data: { mime_type: mime, data: currentB64 } },
+          ],
+        },
+      ],
     };
 
     let lastErr = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) {
         const delay = [2000, 4000, 6000, 8000][attempt - 1];
-        await new Promise(r => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, delay));
       }
-      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.geminiApiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      );
       if (geminiRes.ok) {
         const geminiData = await geminiRes.json();
         const description = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'No description returned.';
