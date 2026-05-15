@@ -18,7 +18,7 @@ export async function createCheckoutSession({ userId, email, priceId, successUrl
   const session = await s.checkout.sessions.create({
     mode: 'subscription',
     customer_email: email,
-    line_items: [{ price: priceId }],
+    line_items: [{ price: priceId, quantity: 1 }],
     metadata: { userId },
     success_url: successUrl || `${config.baseUrl}/account?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: cancelUrl || `${config.baseUrl}/pricing`,

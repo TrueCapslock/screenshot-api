@@ -147,6 +147,49 @@ router.post('/stripe/portal', auth, async (req, res) => {
   }
 });
 
+const TIER_MAP = {};
+for (const [tier, priceId] of Object.entries(config.stripe.prices)) {
+  if (priceId) TIER_MAP[priceId] = tier;
+}
+
+router.post('/stripe/verify-session', auth, async (req, res) => {
+  const { session_id } = req.body;
+  if (!session_id) {
+    return res.status(400).json({ error: 'validation_error', message: 'session_id is required' });
+  }
+
+  try {
+    const s = getStripe();
+    const session = await s.checkout.sessions.retrieve(session_id, {
+      expand: ['line_items.data.price'],
+    });
+
+    if (session.metadata?.userId && session.metadata.userId !== req.apiKey.userId) {
+      return res.status(403).json({ error: 'forbidden', message: 'Session does not belong to this user' });
+    }
+
+    const priceId = session.line_items?.data?.[0]?.price?.id;
+    const tier = priceId ? TIER_MAP[priceId] || 'free' : 'free';
+
+    if (session.status === 'complete' || session.payment_status === 'paid') {
+      await db('users')
+        .where({ id: req.apiKey.userId })
+        .update({
+          tier,
+          stripe_subscription_id: session.subscription || session.id,
+          stripe_customer_id: session.customer,
+          updated_at: db.fn.now(),
+        });
+      return res.json({ status: 'completed', tier });
+    }
+
+    res.json({ status: 'pending', payment_status: session.payment_status });
+  } catch (err) {
+    console.error('Session verification error:', err);
+    res.status(500).json({ error: 'verification_failed', message: err.message });
+  }
+});
+
 router.post(/^\/stripe\/webhook\/?$/, async (req, res) => {
   const sig = req.headers['stripe-signature'];
   if (!sig) {

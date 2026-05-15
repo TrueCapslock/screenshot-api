@@ -1,26 +1,21 @@
-## v1.0.14 (2026-05-15)
+## Unreleased
 
-- API: add `GET /v1/account/recent-urls` returning last 10 unique screenshot URLs per user
-- Dashboard: add autocomplete (`<datalist>`) to Try It URL input populated from recent-urls endpoint
-- Dashboard: add Desktop/Tablet/Mobile icon tags to screenshot list rows, determined from screenshot options
-- Admin: fix `adminRouter` — replace global `router.use(auth, admin)` with per-route middleware so routes mounted after it (compare, describe, session) are reachable for non-admin users
-- Admin: add `POST /admin/users/:id/keys` and `DELETE /admin/keys/:id` endpoints for admin key management
-- Dashboard: add API key management to admin user modal (view keys, create, revoke)
-- Dashboard: show screenshot retention notice below Screenshots heading, populated from server config
-- Dashboard: change language toggle labels from NO/EN to Norsk/English
-- Config: raise default `SCREENSHOT_RETENTION_HOURS` from 1 to 24
-- Cleanup: delete old baseline storage files and DB records immediately when a new baseline replaces them
-- Dev menu: strip old versioned sections from release-note.md after commit (only `## Unreleased` remains)
-- Dev menu: remove duplicate "Press any key" prompt after status option
-- Account: expose `screenshot_retention_hours` in `/v1/account` response
-- AGENTS.md: add conventions section documenting that all changes must be added to release-note.md
-- Tests: fix auth mock call counts in compare.test.js and session.test.js after adminRouter change
-- API: add `DELETE /v1/screenshot/:id` endpoint to delete individual screenshots
-- API: add `POST /v1/screenshot/:id/retry` endpoint to re-queue failed async screenshots
-- API: add pagination (`offset`/`limit`) to `GET /v1/account/screenshots`
-- API: expose `monthly_limit`, `rate_limit`, and `screenshot_retention_hours` in `/v1/account`
-- Dashboard: add paginated screenshots list with "Load more" button
-- Dashboard: add Delete button to each screenshot row
-- Dashboard: show pending/failed status with Retry button for async screenshots
-- Dashboard: show `last_used_at` date for each API key
-- Dashboard: show rate limit (e.g. "5 req/60s") in account section
+- API: add `GET /v1/account/recent-urls` returning last 10 unique screenshot URLs per user for autocomplete
+- API: add `POST /v1/stripe/verify-session` to immediately confirm checkout and update user tier without waiting for webhook
+- API: add `GET /v1/account/screenshots` to OpenAPI/Swagger spec
+- Dashboard: autocomplete (`<datalist>`) on Try It URL input populated from recent-urls endpoint
+- Dashboard: add Desktop/Tablet/Mobile device icon tags to screenshot list rows
+- Dashboard: add same viewport resolution dropdown (Desktop/Tablet/Mobile/Custom) to HTML render tab
+- Dashboard: pull pricing from `GET /v1/stripe/prices` (real Stripe prices when configured, fallback otherwise)
+- Dashboard: show free tier as formatted price (`$0.00` / `0,00 kr`) instead of "Gratis"/"Free"
+- Dashboard: handle `?session_id=` redirect from Stripe checkout — verify session and show confirmation
+- i18n: translate "last used" in key list (`sist brukt`)
+- i18n: Norwegian date format in key list (`toLocaleDateString('nb')`)
+- i18n: add `never`/`aldri` translation key
+- Admin: show full API key for keys created during admin session (in-memory cache)
+- Logging: replace bare console calls with Winston logger — writes to `logs/app.log` with 10MB file rotation, 5 files kept
+- Dev menu: fix `_pad` calculation on same `local` line — split `_pad` onto its own line so `_left`/`_ver` are usable
+- Dev menu: remove stray `echo "${_pad}"` debug output
+- Stripe: add `quantity: 1` to line items (Stripe API requirement)
+- Config: enable `trust proxy` so `req.protocol` resolves correctly behind HTTPS reverse proxy
+- Docs: create `design.md` with full architecture documentation

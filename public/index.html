@@ -1774,6 +1774,18 @@ function showToast(msg, type) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('session_id') && apiKey) {
+  const sid = urlParams.get('session_id');
+  history.replaceState(null, '', window.location.pathname);
+  api('/v1/stripe/verify-session', { method: 'POST', body: JSON.stringify({ session_id: sid }) })
+    .then(r => r.json())
+    .then(d => {
+      if (d.status === 'completed') showToast('Subscription upgraded to ' + d.tier, 'success');
+      else if (d.payment_status) showToast('Payment ' + d.payment_status + ' — waiting for confirmation...', 'info');
+    })
+    .catch(() => {});
+}
 if (apiKey) {
   enterDashboard();
   updateCompareUI();
