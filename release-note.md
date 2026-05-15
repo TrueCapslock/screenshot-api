@@ -1,5 +1,7 @@
-## Unreleased
+## v1.0.7 (2026-05-15)
 
+- Dashboard: add tabbed panel for Try It / Screenshots history
+- Dashboard: disable compare-to-baseline checkbox for Free &amp; Starter tiers (Pro &amp; Business only)
 - Fix baseline: unmark existing baselines before inserting new one (was inserting first, then unmarking all including the new one, leaving zero baselines)
 - Docker: add named volume for screenshots directory to persist across container redeploys
 - Docker: move port mappings to docker-compose.override.yaml to prevent Coolify deployment port conflict

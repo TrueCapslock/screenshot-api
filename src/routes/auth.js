@@ -98,27 +98,58 @@ router.get('/verify-magic', async (req, res) => {
   const user = await db('users').where({ email: email.toLowerCase().trim() }).first();
   const keys = await db('api_keys').where({ user_id: user.id, active: true }).select('id', 'key_prefix', 'name', 'created_at');
 
+  const rawKey = `sk_${crypto.randomBytes(32).toString('hex')}`;
+  const keyPrefix = rawKey.slice(0, 8);
+  const keyHash = await bcrypt.hash(rawKey, 10);
+
+  await db('api_keys').insert({
+    user_id: user.id,
+    key_hash: keyHash,
+    key_prefix: keyPrefix,
+    name: 'Magic Link',
+  });
+
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Login — Screenshot API</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px; }
-      .key { background: #f5f5f5; padding: 12px; border-radius: 6px; font-family: monospace; word-break: break-all; margin: 8px 0; cursor: pointer; }
-      .key:hover { background: #eee; }
-      .btn { display: inline-block; padding: 10px 20px; background: #0052cc; color: #fff; text-decoration: none; border-radius: 6px; margin-top: 16px; }
-      .hint { font-size: 13px; color: #666; margin-top: 4px; }
+      body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px; text-align: center; }
+      h1 { font-size: 22px; margin-bottom: 8px; }
+      p { font-size: 14px; color: #555; line-height: 1.5; }
+      .key { background: #f5f5f5; padding: 14px; border-radius: 6px; font-family: monospace; font-size: 13px; word-break: break-all; margin: 16px 0; cursor: pointer; border: 2px solid transparent; user-select: all; }
+      .key:hover { border-color: #0052cc; }
+      .key.copied { border-color: #28a745; background: #d4edda; }
+      .btn { display: inline-block; padding: 12px 28px; background: #0052cc; color: #fff; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 600; margin-top: 8px; }
+      .btn:hover { background: #003d99; }
+      .warn { font-size: 12px; color: #dc3545; margin-top: 8px; }
     </style>
     </head>
     <body>
     <h1>Welcome${user.name ? `, ${user.name}` : ''}!</h1>
-    <p>Click any key below to copy it, then paste it in the login field:</p>
-    ${keys.length === 0 ? '<p>No active API keys. <a href="/docs">Create one in your dashboard</a>.</p>' : ''}
-    ${keys.map(k => `<div class="key" onclick="navigator.clipboard.writeText(this.dataset.full).then(()=>{this.style.background='#d4edda';setTimeout(()=>this.style.background='',1000)})" data-full="sk_${k.key_prefix}...">sk_${k.key_prefix}... <span class="hint">(${k.name || 'unnamed'})</span></div>`).join('')}
-    <br>
-    <a href="${config.baseUrl}/docs" class="btn">Go to Dashboard</a>
-    <script>const u=new URL(location);const e=u.searchParams.get('email');if(e&&e!=='null'){u.pathname='/docs';u.search='';localStorage.setItem('magicEmail',e);}</script>
+    <p>Your new API key is ready. Click to copy, then save it somewhere safe.</p>
+    <div class="key" id="keyDisplay" onclick="copyKey()">${rawKey}</div>
+    <p style="font-size:12px;color:#999;">This key will not be shown again.</p>
+    <a href="${config.baseUrl}/docs" class="btn" id="dashBtn">Go to Dashboard</a>
+    <script>
+      localStorage.setItem('apiKey', '${rawKey}');
+      function copyKey() {
+        navigator.clipboard.writeText('${rawKey}').then(() => {
+          const el = document.getElementById('keyDisplay');
+          el.classList.add('copied');
+          el.textContent = 'Copied!';
+          setTimeout(() => { el.textContent = '${rawKey}'; el.classList.remove('copied'); }, 1500);
+        });
+      }
+      document.getElementById('dashBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const u = new URL(location);
+        const email = u.searchParams.get('email');
+        if (email && email !== 'null') localStorage.setItem('magicEmail', email);
+        location.href = this.href;
+      });
+    </script>
     </body>
     </html>
   `);

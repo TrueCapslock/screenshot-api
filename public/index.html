@@ -95,6 +95,11 @@
   .label { color: var(--text-secondary); font-size: 14px; }
   .value { font-weight: 600; }
   .tier-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-free { background: #2a2a2a; color: #aaa; }
+  .badge-starter { background: #1a3a2a; color: #8bc99b; }
+  .badge-pro { background: #1a2a3a; color: #8bb8f0; }
+  .badge-business { background: #3a1a1a; color: #f0a0a0; }
   .tier-free { background: var(--tier-free-bg); color: var(--tier-free-text); }
   .tier-starter { background: var(--tier-starter-bg); color: var(--tier-starter-text); }
   .tier-pro { background: var(--tier-pro-bg); color: var(--tier-pro-text); }
@@ -112,6 +117,8 @@
   .api-key { font-family: monospace; font-size: 13px; background: var(--code-bg); padding: 8px 12px; border-radius: 4px; word-break: break-all; margin: 8px 0; }
   .key-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
   .key-row + .key-row { border-top: 1px solid var(--border-light); }
+  .key-row.clickable { cursor: pointer; }
+  .key-row.clickable:hover { background: var(--hover-bg); }
   .key-info { flex: 1; }
   .key-name { font-weight: 600; }
   .key-prefix { font-family: monospace; font-size: 13px; color: var(--text-secondary); }
@@ -127,6 +134,15 @@
   .usage-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.3s; }
   .empty { color: var(--text-muted); font-style: italic; font-size: 14px; padding: 12px 0; }
   .flex { display: flex; gap: 8px; align-items: center; }
+  .dash-panel.active { display: block; }
+  .dash-panel { display: none; }
+  .tab-bar { display: flex; border-bottom: 1px solid var(--border); background: var(--card-bg); }
+  .tab-btn { flex: 1; padding: 10px 16px; font-size: 14px; font-weight: 600; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--hover-bg); }
+  .tab-panel { display: none; padding: 16px; }
+  .tab-panel.active { display: block; }
+  .count-badge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 11px; font-weight: 700; background: var(--primary); color: #fff; vertical-align: middle; margin-left: 4px; }
   .plan-card { transition: box-shadow .2s; border-color: var(--plan-border) !important; }
   .plan-card:hover { box-shadow: 0 2px 12px var(--shadow); }
   .plan-card .btn { margin-top: 8px; }
@@ -219,180 +235,210 @@
     </div>
   </div>
 
+  <div id="dashboardTabBar" class="hidden" style="margin-bottom:16px;">
+    <div class="tab-bar" style="border-radius:8px;overflow:hidden;">
+      <button class="tab-btn active" onclick="switchDashboardTab('account')" id="dashTabBtnAccount" data-i18n="account">Account</button>
+      <button class="tab-btn" onclick="switchDashboardTab('try')" id="dashTabBtnTry" data-i18n="tryIt">Try It</button>
+      <button class="tab-btn" onclick="switchDashboardTab('admin')" id="dashTabBtnAdmin" style="display:none;">&#9878; Admin</button>
+    </div>
+  </div>
+
   <div id="accountSection" class="hidden">
-    <div class="card">
-      <h2 data-i18n="account">Account</h2>
-      <div id="adminLink" class="hidden" style="margin-bottom:8px;"><a href="/docs/admin.html" class="btn btn-secondary btn-sm">&#9878; Admin Panel</a></div>
-      <div class="row"><span class="label" data-i18n="email">Email</span><span class="value" id="accEmail">-</span></div>
-      <div class="row"><span class="label" data-i18n="activeKey">Active Key</span><span class="value" id="accActiveKey" style="font-family:monospace;font-size:12px;">-</span></div>
-      <div class="row"><span class="label" data-i18n="tier">Tier</span><span class="value" id="accTier">-</span></div>
-      <div class="row"><span class="label" data-i18n="subscription">Subscription</span><span class="value" id="accSubscription">-</span></div>
-      <div id="subStatus" style="margin-top:12px;"></div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary btn-sm" onclick="portal()" data-i18n="manageBilling">Manage Billing</button>
-      </div>
-    </div>
-
-    <div class="card" id="pricingSection">
-      <h2 data-i18n="plans">Plans</h2>
-      <div id="plansContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px;">
-        <div class="plan-card" data-tier="free" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
-          <h3 style="font-size:16px;margin-bottom:4px;">Free</h3>
-          <div style="font-size:24px;font-weight:700;">$0</div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">10 <span data-i18n="screenshots">screenshots</span></div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;">5 <span data-i18n="reqMin">req/min</span></div>
-          <button class="btn btn-secondary btn-sm" disabled style="opacity:0.5;cursor:default;" data-i18n="current">Current</button>
-        </div>
-        <div class="plan-card" data-tier="starter" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
-          <h3 style="font-size:16px;margin-bottom:4px;">Starter</h3>
-          <div style="font-size:24px;font-weight:700;">$9</div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">500 <span data-i18n="screenshots">screenshots</span></div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;">60 <span data-i18n="reqMin">req/min</span></div>
-          <button class="btn btn-primary btn-sm" onclick="subscribe('starter')" data-i18n="subscribe">Subscribe</button>
-        </div>
-        <div class="plan-card popular" data-tier="pro" style="border:2px solid #0066ff;border-radius:8px;padding:16px;text-align:center;position:relative;overflow:hidden;">
-          <div class="ribbon"><span data-i18n="popular">POPULAR</span></div>
-          <h3 style="font-size:16px;margin-bottom:4px;">Pro</h3>
-          <div style="font-size:24px;font-weight:700;">$29</div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">2,500 <span data-i18n="screenshots">screenshots</span></div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;">250 <span data-i18n="reqMin">req/min</span></div>
-          <button class="btn btn-primary btn-sm" onclick="subscribe('pro')" data-i18n="subscribe">Subscribe</button>
-        </div>
-        <div class="plan-card" data-tier="business" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
-          <h3 style="font-size:16px;margin-bottom:4px;">Business</h3>
-          <div style="font-size:24px;font-weight:700;">$99</div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
-          <div style="font-size:13px;color:#666;">15,000 <span data-i18n="screenshots">screenshots</span></div>
-          <div style="font-size:13px;color:#666;margin-bottom:12px;">1,000 <span data-i18n="reqMin">req/min</span></div>
-          <button class="btn btn-primary btn-sm" onclick="subscribe('business')" data-i18n="subscribe">Subscribe</button>
-        </div>
-      </div>
-      <p style="margin-top:12px;font-size:13px;color:#999;text-align:center;" data-i18n="stripeNote">
-        Stripe price IDs must be configured in .env for subscriptions to work.
-      </p>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h2 style="margin:0;" data-i18n="apiKeys">API Keys</h2>
-        <button class="btn btn-primary btn-sm" onclick="showCreateKey()" data-i18n="newKey">+ New Key</button>
-      </div>
-
-      <div id="createKeyForm" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--code-bg);border-radius:6px;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="newKeyName" data-i18n-placeholder="keyNamePlaceholder" placeholder="e.g. Production" style="flex:1;">
-          <button class="btn btn-primary btn-sm" onclick="createKey()" data-i18n="create">Create</button>
-          <button class="btn btn-secondary btn-sm" onclick="hideCreateKey()" data-i18n="cancel">Cancel</button>
+    <div id="dashPanelAccount" class="dash-panel active">
+      <div class="card">
+        <h2 data-i18n="account">Account</h2>
+        <div class="row"><span class="label" data-i18n="email">Email</span><span class="value" id="accEmail">-</span></div>
+        <div class="row"><span class="label" data-i18n="activeKey">Active Key</span><span class="value" id="accActiveKey" style="font-family:monospace;font-size:12px;cursor:pointer;color:var(--primary);" title="Click to copy" onclick="copyActiveKey()">-</span></div>
+        <div class="row"><span class="label" data-i18n="tier">Tier</span><span class="value" id="accTier">-</span></div>
+        <div class="row"><span class="label" data-i18n="subscription">Subscription</span><span class="value" id="accSubscription">-</span></div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid var(--border);">
+        <div class="row"><span class="label" data-i18n="apiUsage">API requests</span><span class="value"><span id="accUsage">0</span></span></div>
+        <div class="row"><span class="label" data-i18n="screenshotsCount">Screenshots captured</span><span class="value"><span id="accScreenshotsCount">0</span></span></div>
+        <div class="row"><span class="label" data-i18n="monthlyLimit">Monthly limit</span><span class="value"><span id="accLimit">25</span></span></div>
+        <div class="usage-bar"><div class="usage-bar-fill" id="usageBarFill" style="width:0%"></div></div>
+        <div id="subStatus" style="margin-top:12px;"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="portal()" data-i18n="manageBilling">Manage Billing</button>
         </div>
       </div>
 
-      <div id="keyList"><div class="empty" data-i18n="loading">Loading...</div></div>
-    </div>
-
-    <div class="card">
-      <h2 data-i18n="tryIt">Try It</h2>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button class="btn btn-sm" id="tryUrlTab" onclick="switchTryTab('url')" style="background:var(--primary);color:#fff;">URL</button>
-        <button class="btn btn-sm" id="tryHtmlTab" onclick="switchTryTab('html')" style="background:var(--btn-secondary-bg);color:var(--btn-secondary-text);">HTML</button>
-      </div>
-      <div id="tryUrlSection">
-        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;" data-i18n="tryItDesc">Test the API by taking a screenshot of any URL.</p>
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="testUrl" placeholder="https://example.com" style="flex:1;min-width:100px;">
-          <select id="testFormat" style="width:90px;padding:6px 10px;border-radius:6px;font-size:14px;flex-shrink:0;">
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="webp">WebP</option>
-          </select>
-          <button class="btn btn-primary btn-sm" onclick="testScreenshot()" data-i18n="capture" style="flex-shrink:0;">Capture</button>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--text-secondary);align-items:center;">
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-            <input type="checkbox" id="testFullPage" checked> <span data-i18n="fullPage">Full page</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:4px;">
-            <span data-i18n="resolution">Resolution</span>
-            <select id="testResolution" onchange="toggleResolution()" style="padding:4px 6px;border-radius:4px;font-size:13px;">
-              <option value="desktop">Desktop (1280×720)</option>
-              <option value="tablet">Tablet (768×1024)</option>
-              <option value="mobile">Mobile (390×844)</option>
-              <option value="custom">Custom</option>
-            </select>
-          </label>
-          <label id="testWidthLabel" style="display:flex;align-items:center;gap:4px;display:none;">
-            <span data-i18n="width">Width</span> <input type="number" id="testWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
-          </label>
-          <label id="testHeightLabel" style="display:flex;align-items:center;gap:4px;display:none;">
-            <span data-i18n="height">Height</span> <input type="number" id="testHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
-          </label>
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-            <input type="checkbox" id="testAcceptCookies" onchange="toggleCookieSelector()"> <span data-i18n="acceptCookies">Accept cookies</span>
-          </label>
-          <input type="text" id="testCookieSelector" data-i18n-placeholder="cookieSelectorPlaceholder" placeholder="Custom selector (optional)" style="width:220px;padding:4px 6px;border-radius:4px;font-size:13px;display:none;">
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
-            <input type="checkbox" id="testCompare"> <span>Compare to baseline</span>
-          </label>
-          <span id="compareStatus" style="font-size:12px;color:var(--text-muted);"></span>
-        </div>
-      </div>
-      <div id="tryHtmlSection" style="display:none;">
-        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;" data-i18n="tryHtmlDesc">Render HTML markup to an image.</p>
-        <textarea id="testHtml" placeholder="<h1>Hello!</h1>" style="width:100%;min-height:120px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:monospace;background:var(--input-bg);color:var(--text);resize:vertical;"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-          <select id="testHtmlFormat" style="padding:6px 10px;border-radius:6px;font-size:14px;">
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="webp">WebP</option>
-          </select>
-          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);">
-            <span data-i18n="width">Width</span> <input type="number" id="testHtmlWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
-          </label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);">
-            <span data-i18n="height">Height</span> <input type="number" id="testHtmlHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
-          </label>
-          <button class="btn btn-primary btn-sm" onclick="testHtmlRender()" data-i18n="render">Render</button>
-        </div>
-      </div>
-      <div id="testResult" style="margin-top:12px;"></div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h2 style="margin:0;" data-i18n="screenshots">Screenshots</h2>
-        <button class="btn btn-secondary btn-sm" onclick="toggleScreenshots()" id="screenshotsToggle" data-i18n="showHistory">Show history</button>
-      </div>
-      <div id="screenshotsList" style="display:none;">
-        <div class="empty" style="margin-bottom:8px;" data-i18n="loading">Loading...</div>
-      </div>
-      <div id="screenshotPreview" style="display:none;margin-top:12px;text-align:center;">
-        <img id="previewImg" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
-        <div style="margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="closePreview()" data-i18n="closePreview">Close</button></div>
-      </div>
-      <div id="previewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 id="modalTitle">Screenshot</h3>
-            <button class="btn btn-secondary btn-sm" onclick="closeModal()" data-i18n="closePreview">Close</button>
+      <div class="card" id="pricingSection">
+        <h2 data-i18n="plans">Plans</h2>
+        <div id="plansContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px;">
+          <div class="plan-card" data-tier="free" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
+            <h3 style="font-size:16px;margin-bottom:4px;">Free</h3>
+            <div style="font-size:24px;font-weight:700;">$0</div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
+            <div style="font-size:13px;color:#666;">10 <span data-i18n="screenshots">screenshots</span></div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;">5 <span data-i18n="reqMin">req/min</span></div>
+            <button class="btn btn-secondary btn-sm" disabled style="opacity:0.5;cursor:default;" data-i18n="current">Current</button>
           </div>
-          <div class="modal-tabs" id="modalTabs"></div>
-          <div class="modal-body" id="modalBody"></div>
+          <div class="plan-card" data-tier="starter" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
+            <h3 style="font-size:16px;margin-bottom:4px;">Starter</h3>
+            <div style="font-size:24px;font-weight:700;">$9</div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
+            <div style="font-size:13px;color:#666;">500 <span data-i18n="screenshots">screenshots</span></div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;">60 <span data-i18n="reqMin">req/min</span></div>
+            <button class="btn btn-primary btn-sm" onclick="subscribe('starter')" data-i18n="subscribe">Subscribe</button>
+          </div>
+          <div class="plan-card popular" data-tier="pro" style="border:2px solid #0066ff;border-radius:8px;padding:16px;text-align:center;position:relative;overflow:hidden;">
+            <div class="ribbon"><span data-i18n="popular">POPULAR</span></div>
+            <h3 style="font-size:16px;margin-bottom:4px;">Pro</h3>
+            <div style="font-size:24px;font-weight:700;">$29</div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
+            <div style="font-size:13px;color:#666;">2,500 <span data-i18n="screenshots">screenshots</span></div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;">250 <span data-i18n="reqMin">req/min</span></div>
+            <button class="btn btn-primary btn-sm" onclick="subscribe('pro')" data-i18n="subscribe">Subscribe</button>
+          </div>
+          <div class="plan-card" data-tier="business" style="border:1px solid #ddd;border-radius:8px;padding:16px;text-align:center;">
+            <h3 style="font-size:16px;margin-bottom:4px;">Business</h3>
+            <div style="font-size:24px;font-weight:700;">$99</div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="perMonth">/month</div>
+            <div style="font-size:13px;color:#666;">15,000 <span data-i18n="screenshots">screenshots</span></div>
+            <div style="font-size:13px;color:#666;margin-bottom:12px;">1,000 <span data-i18n="reqMin">req/min</span></div>
+            <button class="btn btn-primary btn-sm" onclick="subscribe('business')" data-i18n="subscribe">Subscribe</button>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px;color:#999;text-align:center;" data-i18n="stripeNote">
+          Stripe price IDs must be configured in .env for subscriptions to work.
+        </p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;" data-i18n="apiKeys">API Keys</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateKey()" data-i18n="newKey">+ New Key</button>
+        </div>
+
+        <div id="createKeyForm" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--code-bg);border-radius:6px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="newKeyName" data-i18n-placeholder="keyNamePlaceholder" placeholder="e.g. Production" style="flex:1;">
+            <button class="btn btn-primary btn-sm" onclick="createKey()" data-i18n="create">Create</button>
+            <button class="btn btn-secondary btn-sm" onclick="hideCreateKey()" data-i18n="cancel">Cancel</button>
+          </div>
+        </div>
+
+        <div id="keyList"><div class="empty" data-i18n="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <div id="dashPanelTry" class="dash-panel">
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2 data-i18n="tryIt">Try It</h2>
+          <a href="/docs/api" target="_blank" class="btn btn-secondary btn-sm">&#128196; API Docs</a>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-sm" id="tryUrlTab" onclick="switchTryTab('url')" style="background:var(--primary);color:#fff;">URL</button>
+          <button class="btn btn-sm" id="tryHtmlTab" onclick="switchTryTab('html')" style="background:var(--btn-secondary-bg);color:var(--btn-secondary-text);">HTML</button>
+        </div>
+        <div id="tryUrlSection">
+          <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;" data-i18n="tryItDesc">Test the API by taking a screenshot of any URL.</p>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="testUrl" placeholder="https://example.com" style="flex:1;min-width:100px;">
+            <select id="testFormat" style="width:90px;padding:6px 10px;border-radius:6px;font-size:14px;flex-shrink:0;">
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="testScreenshot()" data-i18n="capture" style="flex-shrink:0;">Capture</button>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--text-secondary);align-items:center;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="checkbox" id="testFullPage" checked> <span data-i18n="fullPage">Full page</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;">
+              <span data-i18n="resolution">Resolution</span>
+              <select id="testResolution" onchange="toggleResolution()" style="padding:4px 6px;border-radius:4px;font-size:13px;">
+                <option value="desktop">Desktop (1280×720)</option>
+                <option value="tablet">Tablet (768×1024)</option>
+                <option value="mobile">Mobile (390×844)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <label id="testWidthLabel" style="display:flex;align-items:center;gap:4px;display:none;">
+              <span data-i18n="width">Width</span> <input type="number" id="testWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
+            </label>
+            <label id="testHeightLabel" style="display:flex;align-items:center;gap:4px;display:none;">
+              <span data-i18n="height">Height</span> <input type="number" id="testHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="checkbox" id="testAcceptCookies" onchange="toggleCookieSelector()"> <span data-i18n="acceptCookies">Accept cookies</span>
+            </label>
+            <input type="text" id="testCookieSelector" data-i18n-placeholder="cookieSelectorPlaceholder" placeholder="Custom selector (optional)" style="width:220px;padding:4px 6px;border-radius:4px;font-size:13px;display:none;">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--text-secondary);" id="compareLabel">
+              <input type="checkbox" id="testCompare"> <span>Compare to baseline</span> <span id="compareLock" style="display:none;font-size:12px;color:#999;" title="Pro &amp; Business only">&#x1f512;</span>
+            </label>
+            <span id="compareStatus" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
+        </div>
+        <div id="tryHtmlSection" style="display:none;">
+          <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;" data-i18n="tryHtmlDesc">Render HTML markup to an image.</p>
+          <textarea id="testHtml" placeholder="<h1>Hello!</h1>" style="width:100%;min-height:120px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:monospace;background:var(--input-bg);color:var(--text);resize:vertical;"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+            <select id="testHtmlFormat" style="padding:6px 10px;border-radius:6px;font-size:14px;">
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);">
+              <span data-i18n="width">Width</span> <input type="number" id="testHtmlWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);">
+              <span data-i18n="height">Height</span> <input type="number" id="testHtmlHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
+            </label>
+            <button class="btn btn-primary btn-sm" onclick="testHtmlRender()" data-i18n="render">Render</button>
+          </div>
+        </div>
+        <div id="testResult" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0;display:flex;align-items:center;gap:6px;"><span data-i18n="screenshots">Screenshots</span> <span id="screenshotCountBadge" class="count-badge" style="display:none;">0</span></h2>
+        <div id="screenshotsList" style="margin-top:12px;">
+          <div class="empty" data-i18n="loading">Loading...</div>
+        </div>
+        <div id="screenshotPreview" style="display:none;margin-top:12px;text-align:center;">
+          <img id="previewImg" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
+          <div style="margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="closePreview()" data-i18n="closePreview">Close</button></div>
+        </div>
+        <div id="previewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+          <div class="modal">
+            <div class="modal-header">
+              <h3 id="modalTitle">Screenshot</h3>
+              <button class="btn btn-secondary btn-sm" onclick="closeModal()" data-i18n="closePreview">Close</button>
+            </div>
+            <div class="modal-tabs" id="modalTabs"></div>
+            <div class="modal-body" id="modalBody"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h2 style="margin:0;" data-i18n="usage">Usage</h2>
+    <div id="dashPanelAdmin" class="dash-panel">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;">Users</h2>
+          <button class="btn btn-secondary btn-sm" onclick="loadAdminUsers()">&#8635; Refresh</button>
+        </div>
+        <div id="adminUsersWrapper">
+          <div class="empty">Loading...</div>
+        </div>
       </div>
-      <div class="row"><span class="label" data-i18n="apiUsage">API requests</span><span class="value"><span id="accUsage">0</span></span></div>
-      <div class="row"><span class="label" data-i18n="screenshotsCount">Screenshots captured</span><span class="value"><span id="accScreenshotsCount">0</span></span></div>
-      <div class="row"><span class="label" data-i18n="monthlyLimit">Monthly limit</span><span class="value"><span id="accLimit">25</span></span></div>
     </div>
+
+    <div id="adminUserModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeAdminModal()">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="adminModalTitle">User</h3>
+          <button class="btn btn-secondary btn-sm" onclick="closeAdminModal()">Close</button>
+        </div>
+        <div id="adminModalBody" style="padding:20px;"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -401,14 +447,30 @@
 <script>
 const API = window.location.origin;
 let apiKey = localStorage.getItem('apiKey');
+let sessionToken = localStorage.getItem('sessionToken');
 let userData = null;
 fetch('/health').then(r => r.json()).then(d => { document.getElementById('versionTag').textContent = 'v' + d.version; }).catch(() => {});
 
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (apiKey) headers['x-api-key'] = apiKey;
+  if (sessionToken) headers['x-session-token'] = sessionToken;
+  else if (apiKey) headers['x-api-key'] = apiKey;
   const res = await fetch(`${API}${path}`, { ...opts, headers });
   return res;
+}
+
+async function createSession() {
+  if (!apiKey) return;
+  const oldToken = sessionToken;
+  sessionToken = null;
+  const res = await api('/v1/session', { method: 'POST' });
+  if (res.ok) {
+    const data = await res.json();
+    sessionToken = data.token;
+    localStorage.setItem('sessionToken', sessionToken);
+  } else {
+    sessionToken = oldToken;
+  }
 }
 
 function showLogin() {
@@ -447,14 +509,23 @@ async function sendMagicLink() {
 function enterDashboard() {
   document.getElementById('authSection').classList.add('hidden');
   document.getElementById('accountSection').classList.remove('hidden');
+  document.getElementById('dashboardTabBar').classList.remove('hidden');
   document.getElementById('logoutBtn').classList.remove('hidden');
+  createSession();
 }
 
 function leaveDashboard() {
+  const st = sessionToken;
   apiKey = null;
   userData = null;
+  sessionToken = null;
   localStorage.removeItem('apiKey');
+  localStorage.removeItem('sessionToken');
+  if (st) {
+    api('/v1/session', { method: 'DELETE' }).catch(() => {});
+  }
   document.getElementById('accountSection').classList.add('hidden');
+  document.getElementById('dashboardTabBar').classList.add('hidden');
   document.getElementById('authSection').classList.remove('hidden');
   document.getElementById('logoutBtn').classList.add('hidden');
   showSignup();
@@ -510,7 +581,39 @@ function renderKey(key) {
   const el = document.createElement('div');
   el.className = 'api-key';
   el.textContent = key;
+  el.style.cursor = 'pointer';
+  el.title = 'Click to set as active key';
+  el.onclick = function() {
+    document.querySelectorAll('.api-key').forEach(e => e.style.background = 'var(--code-bg)');
+    this.style.background = '#d4edda';
+    setActiveKey(key);
+  };
   document.getElementById('createKeyForm').before(el);
+  storeKey(key);
+}
+
+function storeKey(key) {
+  try {
+    const stored = JSON.parse(localStorage.getItem('storedKeys') || '{}');
+    stored[key.slice(0, 8)] = key;
+    localStorage.setItem('storedKeys', JSON.stringify(stored));
+  } catch {}
+}
+
+function setActiveKey(key) {
+  apiKey = key;
+  localStorage.setItem('apiKey', key);
+  document.getElementById('accActiveKey').textContent = key;
+  if (sessionToken && userData && userData.keys) {
+    const match = userData.keys.find(k => k.key_prefix === key.slice(0, 8));
+    if (match) {
+      api('/v1/session/key', {
+        method: 'POST',
+        body: JSON.stringify({ key_id: match.id }),
+      }).then(r => r.ok && loadAccount()).catch(() => {});
+    }
+  }
+  showToast('Active key updated', 'success');
 }
 
 async function loadAccount() {
@@ -524,20 +627,28 @@ async function loadAccount() {
     }
     const data = await res.json();
     userData = data;
+    storeKey(apiKey);
 
     document.getElementById('accEmail').textContent = data.user.email || '-';
-    document.getElementById('accActiveKey').textContent = data.current_key_prefix + '...';
+    document.getElementById('accActiveKey').textContent = localStorage.getItem('apiKey') || data.current_key_prefix + '...';
     document.getElementById('accTier').textContent = data.user.tier;
     document.getElementById('accUsage').textContent = data.usage;
-    document.getElementById('adminLink').style.display = data.user.is_admin ? 'block' : 'none';
+    document.getElementById('dashTabBtnAdmin').style.display = data.user.is_admin ? '' : 'none';
+    if (data.user.is_admin) loadAdminUsers();
 
     const tier = data.user.tier;
     const limits = { free: 10, starter: 500, pro: 2500, business: 15000 };
     const limit = limits[tier] || 25;
     document.getElementById('accLimit').textContent = limit;
+    document.getElementById('usageBarFill').style.width = Math.min(100, (data.usage / limit) * 100) + '%';
 
     api('/v1/account/screenshots').then(r => r.ok && r.json()).then(d => {
-      if (d) document.getElementById('accScreenshotsCount').textContent = d.total;
+      if (d) {
+        document.getElementById('accScreenshotsCount').textContent = d.total;
+        const badge = document.getElementById('screenshotCountBadge');
+        badge.textContent = d.total;
+        badge.style.display = d.total > 0 ? 'inline' : 'none';
+      }
     }).catch(() => {});
 
     const hasSub = !!data.user.stripe_subscription_id;
@@ -551,6 +662,8 @@ async function loadAccount() {
     const badge = document.getElementById('tierDisplay');
     badge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
     badge.className = 'tier-badge tier-' + tier;
+
+    updateCompareUI();
 
     renderKeys(data.keys);
   } catch (e) {
@@ -581,15 +694,39 @@ function renderKeys(keys) {
     list.innerHTML = '<div class="empty">' + t('noKeys') + '</div>';
     return;
   }
-  list.innerHTML = keys.map(k => `
-    <div class="key-row">
+  const activePrefix = (userData && userData.current_key_prefix) || (apiKey || '').slice(0, 8);
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem('storedKeys') || '{}'); } catch {}
+  list.innerHTML = keys.map(k => {
+    const full = stored[k.key_prefix];
+    return `
+    <div class="key-row clickable" onclick="activateKeyRow('${esc(k.key_prefix)}','${esc(k.name)}')">
       <div class="key-info">
-        <div class="key-name">${esc(k.name)}</div>
+        <div class="key-name">${esc(k.name)}${k.key_prefix === activePrefix ? ' <span style="font-size:11px;color:var(--primary);font-weight:600;">(active)</span>' : ''}</div>
         <div class="key-prefix">${esc(k.key_prefix)}...${k.active ? '' : ' ' + t('inactive')}</div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="revokeKey('${k.id}')">${t('revoke')}</button>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();revokeKey('${k.id}')">${t('revoke')}</button>
     </div>
-  `).join('');
+  `}).join('');
+}
+
+async function activateKeyRow(prefix, name) {
+  if (!userData || !userData.keys) return;
+  const key = userData.keys.find(k => k.key_prefix === prefix);
+  if (!key) return;
+  try {
+    const res = await api('/v1/session/key', {
+      method: 'POST',
+      body: JSON.stringify({ key_id: key.id }),
+    });
+    if (res.ok) {
+      await loadAccount();
+    } else {
+      showToast('Failed to switch key', 'error');
+    }
+  } catch {
+    showToast(t('networkError'), 'error');
+  }
 }
 
 function showCreateKey() {
@@ -831,6 +968,24 @@ async function downloadScreenshot(id) {
   return false;
 }
 
+function updateCompareUI() {
+  const tier = (userData && userData.user && userData.user.tier) || 'free';
+  const canCompare = tier === 'pro' || tier === 'business';
+  const cb = document.getElementById('testCompare');
+  const lock = document.getElementById('compareLock');
+  const label = document.getElementById('compareLabel');
+  if (!canCompare) {
+    cb.checked = false;
+    cb.disabled = true;
+    lock.style.display = 'inline';
+    if (label) label.style.cursor = 'not-allowed';
+  } else {
+    cb.disabled = false;
+    lock.style.display = 'none';
+    if (label) label.style.cursor = 'pointer';
+  }
+}
+
 async function describeDiff(id, btn) {
   const resultDiv = btn.parentElement.querySelector('[id$="DescribeResult"]');
   if (!resultDiv) return;
@@ -876,19 +1031,17 @@ async function setBaseline(id) {
   return false;
 }
 
+function switchDashboardTab(tab) {
+  document.querySelectorAll('#dashboardTabBar .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dashTabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  document.querySelectorAll('#accountSection .dash-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('dashPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (tab === 'try') loadScreenshots();
+}
+
 async function toggleScreenshots() {
-  const list = document.getElementById('screenshotsList');
-  const btn = document.getElementById('screenshotsToggle');
-  if (list.style.display === 'none') {
-    list.style.display = 'block';
-    btn.dataset.i18n = 'hideHistory';
-    btn.textContent = t('hideHistory');
-    await loadScreenshots();
-  } else {
-    list.style.display = 'none';
-    btn.dataset.i18n = 'showHistory';
-    btn.textContent = t('showHistory');
-  }
+  switchDashboardTab('try');
+  document.getElementById('screenshotsList').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function loadScreenshots() {
@@ -1056,8 +1209,11 @@ async function testScreenshot() {
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">${t('capturedIn')} ${duration}ms${isBaseline ? ' &middot; Saved as baseline' : ''}</p>
           <img src="${imgUrl}" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
         `;
-        document.getElementById('accUsage').textContent = parseInt(document.getElementById('accUsage').textContent) + 1;
+        const newUsage = parseInt(document.getElementById('accUsage').textContent) + 1;
+        document.getElementById('accUsage').textContent = newUsage;
         document.getElementById('accScreenshotsCount').textContent = parseInt(document.getElementById('accScreenshotsCount').textContent) + 1;
+        const lmt = parseInt(document.getElementById('accLimit').textContent);
+        document.getElementById('usageBarFill').style.width = Math.min(100, (newUsage / lmt) * 100) + '%';
       }
       loadScreenshots();
     } else {
@@ -1065,6 +1221,10 @@ async function testScreenshot() {
       if (compare && res.status === 404) {
         status.textContent = 'No baseline found. Take a screenshot with "Set Baseline" first.';
         status.style.color = '#dc3545';
+      } else if (compare && res.status === 403) {
+        status.textContent = 'Compare is Pro & Business only';
+        status.style.color = '#dc3545';
+        updateCompareUI();
       }
       result.innerHTML = `<p style="color:#dc3545;">${data.message}</p>`;
     }
@@ -1282,7 +1442,10 @@ function applyLanguage() {
 function toggleLang() {
   currentLang = currentLang === 'nb' ? 'en' : 'nb';
   applyLanguage();
-  if (apiKey && userData) loadAccount();
+  if (apiKey && userData) {
+    loadAccount();
+    updateCompareUI();
+  }
 }
 
 (function initLang() {
@@ -1291,7 +1454,145 @@ function toggleLang() {
   applyLanguage();
 })();
 
+async function loadAdminUsers() {
+  const wrapper = document.getElementById('adminUsersWrapper');
+  if (!wrapper) return;
+  wrapper.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const res = await api('/v1/admin/users');
+    if (!res.ok) { wrapper.innerHTML = '<div class="empty">Failed to load users</div>'; return; }
+    const data = await res.json();
+    if (!data.users || data.users.length === 0) {
+      wrapper.innerHTML = '<div class="empty">No users found</div>';
+      return;
+    }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="color:var(--text-secondary);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Email</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Name</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Tier</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Sub</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">API Usage</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Screenshots</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Keys</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);">Created</th>' +
+      '<th style="text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-light);"></th></tr></thead><tbody>';
+    data.users.forEach(u => {
+      const date = new Date(u.created_at).toLocaleDateString();
+      const sub = u.stripe_subscription_id ? '<span style="color:var(--success);">&#10003;</span>' : '&mdash;';
+      html += '<tr>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + esc(u.email) + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + esc(u.name || '&mdash;') + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);"><span class="badge badge-' + u.tier + '">' + u.tier + '</span></td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + sub + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + u.api_usage + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + u.screenshots + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + u.api_keys + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);">' + date + '</td>' +
+        '<td style="padding:10px 8px;border-bottom:1px solid var(--border-light);"><button class="btn btn-secondary btn-sm" onclick="viewAdminUser(\'' + u.id + '\')">Manage</button></td>' +
+      '</tr>';
+    });
+    html += '</tbody></table>';
+    wrapper.innerHTML = html;
+  } catch {
+    wrapper.innerHTML = '<div class="empty">Network error</div>';
+  }
+}
+
+async function viewAdminUser(id) {
+  const overlay = document.getElementById('adminUserModal');
+  const body = document.getElementById('adminModalBody');
+  const title = document.getElementById('adminModalTitle');
+  title.textContent = 'Loading...';
+  overlay.style.display = 'flex';
+  body.innerHTML = '<p style="color:var(--text-muted);">Loading...</p>';
+  try {
+    const res = await api('/v1/admin/users/' + id);
+    if (!res.ok) { body.innerHTML = '<p style="color:var(--danger);">Failed to load</p>'; return; }
+    const data = await res.json();
+    const u = data.user;
+    title.textContent = esc(u.email);
+    body.innerHTML = `
+      <div style="margin-bottom:16px;">
+        <div class="field">
+          <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Email</label>
+          <input type="text" value="${esc(u.email)}" disabled style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--input-bg);color:var(--text);">
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Name</label>
+          <input type="text" id="adminEditName" value="${esc(u.name || '')}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--input-bg);color:var(--text);">
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Tier</label>
+          <select id="adminEditTier" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--input-bg);color:var(--text);">
+            <option value="free" ${u.tier === 'free' ? 'selected' : ''}>Free</option>
+            <option value="starter" ${u.tier === 'starter' ? 'selected' : ''}>Starter</option>
+            <option value="pro" ${u.tier === 'pro' ? 'selected' : ''}>Pro</option>
+            <option value="business" ${u.tier === 'business' ? 'selected' : ''}>Business</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-primary btn-sm" onclick="saveAdminUser('${u.id}')">Save Changes</button>
+        <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this user and all their data?'))deleteAdminUser('${u.id}')">Delete User</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeAdminModal()">Cancel</button>
+      </div>
+    `;
+  } catch {
+    body.innerHTML = '<p style="color:var(--danger);">Network error</p>';
+  }
+}
+
+async function saveAdminUser(id) {
+  const name = document.getElementById('adminEditName').value;
+  const tier = document.getElementById('adminEditTier').value;
+  try {
+    const res = await api('/v1/admin/users/' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, tier }),
+    });
+    if (res.ok) {
+      showToast('User updated', 'success');
+      closeAdminModal();
+      loadAdminUsers();
+    } else {
+      const data = await res.json();
+      showToast(data.message || 'Update failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+}
+
+async function deleteAdminUser(id) {
+  try {
+    const res = await api('/v1/admin/users/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('User deleted', 'success');
+      closeAdminModal();
+      loadAdminUsers();
+    } else {
+      showToast('Delete failed', 'error');
+    }
+  } catch {
+    showToast('Network error', 'error');
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('adminUserModal').style.display = 'none';
+}
+
 function esc(s) { return String(s).replace(/[&<>"']/g, ''); }
+
+function copyActiveKey() {
+  const key = localStorage.getItem('apiKey');
+  if (!key) return;
+  navigator.clipboard.writeText(key).then(() => {
+    showToast('Key copied', 'success');
+  }).catch(() => {
+    showToast('Failed to copy', 'error');
+  });
+}
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
@@ -1302,6 +1603,7 @@ function showToast(msg, type) {
 
 if (apiKey) {
   enterDashboard();
+  updateCompareUI();
   loadAccount();
 }
 </script>

@@ -8,14 +8,14 @@ const router = Router();
 
 router.use(auth);
 
-router.get('/', async (req, res) => {
+router.get('/keys', async (req, res) => {
   const keys = await db('api_keys')
     .where({ user_id: req.apiKey.userId })
     .select('id', 'key_prefix', 'name', 'active', 'last_used_at', 'created_at');
   res.json({ keys });
 });
 
-router.post('/', async (req, res) => {
+router.post('/keys', async (req, res) => {
   const { name } = req.body;
   if (!name || typeof name !== 'string') {
     return res.status(400).json({ error: 'validation_error', message: 'name is required' });
@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
   });
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/keys/:id', async (req, res) => {
   const deleted = await db('api_keys').where({ id: req.params.id, user_id: req.apiKey.userId }).del();
 
   if (!deleted) {

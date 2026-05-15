@@ -405,7 +405,6 @@ deploy_submenu() {
     local ver=$1
     if [ -f release-note.md ] && grep -q '^## Unreleased' release-note.md; then
       sed -i "s/^## Unreleased/## v$ver ($(date '+%Y-%m-%d'))/" release-note.md
-      printf '## Unreleased\n\n%s' "$(cat release-note.md)" > release-note.md
       echo "  release-note.md: Unreleased → v$ver"
     fi
   }
@@ -416,13 +415,21 @@ deploy_submenu() {
       return
     fi
     local msg
-    msg=$(awk '/^## Unreleased/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
+    if grep -q '^## Unreleased' release-note.md; then
+      msg=$(awk '/^## Unreleased/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
+    else
+      msg=$(awk '/^## v/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
+    fi
     if [ -z "$msg" ]; then
-      echo "No Unreleased entries in release-note.md, skipping commit."
+      echo "No entries to commit in release-note.md, skipping commit."
       return
     fi
     echo "$msg" | git commit -F - 2>&1 | sed 's/^/  /'
     APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
+    if ! grep -q '^## Unreleased' release-note.md; then
+      printf '## Unreleased\n\n' | cat - release-note.md > /tmp/release-note.md && mv /tmp/release-note.md release-note.md
+      echo "  New ## Unreleased section created."
+    fi
   }
 
   while true; do
