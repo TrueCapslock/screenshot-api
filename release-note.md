@@ -1,4 +1,4 @@
-## Unreleased
+## v1.0.10 (2026-05-15)
 
 - Fixed some issues with commit messages
 
