@@ -1,3 +1,5 @@
+## v1.0.9 (2026-05-15)
+
 ## v1.0.7 (2026-05-15)
 
 - Dashboard: add tabbed panel for Try It / Screenshots history

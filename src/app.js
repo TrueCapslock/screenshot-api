@@ -25,16 +25,14 @@ app.use((_req, res, next) => {
 app.get('/', (req, res) => res.redirect('/docs'));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-app.get('/openapi.json', (req, res) => {
-  const spec = { ...openapiSpec, servers: [{ url: `${req.protocol}://${req.get('host')}`, description: 'Server' }] };
-  res.json(spec);
-});
-
 app.use('/docs', express.static(join(__dirname, '..', 'public')));
 app.use(
   '/docs/api',
   swaggerUi.serve,
-  swaggerUi.setup(null, { swaggerUrl: '/openapi.json', customSiteTitle: 'Screenshot API Docs' }),
+  (req, res, next) => {
+    const spec = { ...openapiSpec, servers: [{ url: `${req.protocol}://${req.get('host')}`, description: 'Server' }] };
+    swaggerUi.setup(spec, { customSiteTitle: 'Screenshot API Docs' })(req, res, next);
+  },
 );
 
 app.use('/v1/stripe/webhook', express.raw({ type: 'application/json' }));
