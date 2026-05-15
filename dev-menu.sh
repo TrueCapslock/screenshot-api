@@ -395,7 +395,7 @@ deploy_submenu() {
       2) echo "Bumping minor: v$APP_VERSION →"; npm version minor --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
       3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
       4) docker_submenu ;;
-      5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; _commit_from_release_note ;;
+       5) _release_to_version "$APP_VERSION"; echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; _commit_from_release_note ;;
       6) echo "Pushing..."; git push -u origin HEAD 2>&1 | sed 's/^/  /' ;;
       7) return ;;
     esac
