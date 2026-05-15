@@ -1,6 +1,13 @@
+## v1.0.11 (2026-05-15)
+
+- Menu: `_commit_from_release_note` now renames `## Unreleased` to versioned header before extracting, making commit menu (option 5) self-contained
+- Menu: fix awk commit message extraction — match specific version header instead of first `## v`, prevent old version content leaking into commit message
+- Menu: robust awk pattern for duplicate version headers (use `!flag &&` guard so duplicate headers trigger the stop rule instead of being consumed by `next`)
+
 ## v1.0.10 (2026-05-15)
 
-- Fixed some issues with commit messages
+- Menu: extract commit message from specific version header matching package.json (not first `## v` in file)
+- Menu: rename `## Unreleased` to versioned header before committing (commit menu is now self-contained, no prior bump required)
 
 ## v1.0.7 (2026-05-15)
 

@@ -395,7 +395,7 @@ deploy_submenu() {
       2) echo "Bumping minor: v$APP_VERSION →"; npm version minor --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
       3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
       4) docker_submenu ;;
-       5) _release_to_version "$APP_VERSION"; echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; _commit_from_release_note ;;
+       5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; _commit_from_release_note ;;
       6) echo "Pushing..."; git push -u origin HEAD 2>&1 | sed 's/^/  /' ;;
       7) return ;;
     esac
@@ -417,10 +417,10 @@ deploy_submenu() {
     local ver msg
     ver=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
     if grep -q '^## Unreleased' release-note.md; then
-      msg=$(awk '/^## Unreleased/{flag=1; next} /^## / && flag{flag=0} flag' release-note.md | sed '/./,$!d')
-    else
-      msg=$(awk "/^## v${ver//./\\.}/{flag=1; next} /^## / && flag{flag=0} flag" release-note.md | sed '/./,$!d')
+      sed -i "s/^## Unreleased/## v$ver ($(date '+%Y-%m-%d'))/" release-note.md
+      echo "  release-note.md: Unreleased → v$ver"
     fi
+    msg=$(awk "!flag && /^## v${ver//./\\.}/{flag=1; next} flag && /^## /{flag=0; next} flag" release-note.md | sed '/./,$!d')
     if [ -z "$msg" ]; then
       echo "No entries to commit in release-note.md, skipping commit."
       return
