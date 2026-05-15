@@ -1,3 +1,5 @@
+import './instrument.js';
+
 import app from './app.js';
 import config from './config.js';
 import db from './db/knex.js';

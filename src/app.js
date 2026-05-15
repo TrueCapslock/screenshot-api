@@ -1,7 +1,9 @@
+import './instrument.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
+import * as Sentry from '@sentry/node';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -23,7 +25,9 @@ app.use((_req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => res.redirect('/docs'));
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '..', 'public', 'landing.html'));
+});
 app.get('/account', (req, res) => {
   const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
   res.redirect('/docs' + qs);
@@ -62,6 +66,7 @@ app.use('/v1', compareRouter);
 app.use('/v1', describeRouter);
 app.use('/v1', sessionRouter);
 
+Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
 
 export default app;

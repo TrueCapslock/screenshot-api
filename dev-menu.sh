@@ -359,7 +359,7 @@ dev_submenu() {
 }
 
 deploy_submenu() {
-  local selected=0 items_len=8
+  local selected=0 items_len=9
   local G=$'\e[32m' R=$'\e[31m' X=$'\e[0m'
 
   _ditem() {
@@ -385,13 +385,14 @@ deploy_submenu() {
     _ditem 4 $sel "5) Docker build/push"
     _ditem 5 $sel "6) Git commit"
     _ditem 6 $sel "7) Git push"
-    _ditem 7 $sel "b) Back to main menu"
+    _ditem 7 $sel "8) Sentry release"
+    _ditem 8 $sel "b) Back to main menu"
     echo "╚══════════════════════════════════════╝"
     echo ""
     echo -n "Select option: "
   }
 
-  local _dmenu_lines=14
+  local _dmenu_lines=15
 
   _deploy_run() {
     printf '\e[%dA\e[J' $_dmenu_lines
@@ -402,8 +403,19 @@ deploy_submenu() {
       3) echo "Bumping major: v$APP_VERSION →"; npm version major --no-git-tag-version 2>&1 | sed 's/^/  /'; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); _release_to_version "$APP_VERSION" ;;
       4) docker_submenu ;;
        5) echo "Staging all changes..."; git add -A 2>&1 | sed 's/^/  /'; _commit_from_release_note ;;
-      6) echo "Pushing..."; git push -u origin HEAD 2>&1 | sed 's/^/  /' ;;
-      7) return ;;
+       6) echo "Pushing..."; git push -u origin HEAD 2>&1 | sed 's/^/  /' ;;
+       7) echo "Creating Sentry release..."; APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0"); SENTRY_RELEASE="screenshot-api@${APP_VERSION}"; SENTRY_ORG="${SENTRY_ORG:-anomaly}"; SENTRY_PROJECT="${SENTRY_PROJECT:-screenshot-api}"; if [ -z "$SENTRY_AUTH_TOKEN" ] && [ -f .env ]; then SENTRY_AUTH_TOKEN=$(grep '^SENTRY_AUTH_TOKEN=' .env | sed 's/^SENTRY_AUTH_TOKEN=//' | head -1) && export SENTRY_AUTH_TOKEN; fi; if [ -z "$SENTRY_AUTH_TOKEN" ]; then echo "  $R⚠ SENTRY_AUTH_TOKEN not set — skipping Sentry release$X"; else
+  npx @sentry/cli releases new "$SENTRY_RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" 2>&1 | sed 's/^/  /'
+  _rc=${PIPESTATUS[0]}; [ $_rc -ne 0 ] && echo "  ${R}✗ releases new failed ($_rc)${X}" && _sentry_fail=1
+  if [ -z "$_sentry_fail" ]; then
+    npx @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto 2>&1 | sed 's/^/  /'
+    _rc=${PIPESTATUS[0]}; [ $_rc -ne 0 ] && echo "  ${R}✗ set-commits failed ($_rc)${X}"
+    npx @sentry/cli releases finalize "$SENTRY_RELEASE" 2>&1 | sed 's/^/  /'
+    _rc=${PIPESTATUS[0]}; [ $_rc -ne 0 ] && echo "  ${R}✗ finalize failed ($_rc)${X}"
+  fi
+  unset _sentry_fail _rc
+fi ;;
+       8) return ;;
     esac
   }
 
@@ -463,7 +475,7 @@ deploy_submenu() {
       elif [[ "$key" == $'\n' || "$key" == $'\r' || "$key" == "" ]]; then
         case $selected in
           4) printf '\e[%dA\e[J' $_dmenu_lines; docker_submenu ;;
-          7) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
+          8) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
           *) _deploy_run $selected; echo ""; read -s -n1 -p "Press any key to continue..." ;;
         esac
         break
@@ -476,6 +488,7 @@ deploy_submenu() {
           5) printf '\e[%dA\e[J' $_dmenu_lines; docker_submenu ;;
           6) _deploy_run 5 ;;
           7) _deploy_run 6 ;;
+          8) _deploy_run 7 ;;
           b|B) printf '\e[%dA\e[J' $_dmenu_lines; return ;;
         esac
         [[ "$key" != "5" ]] && { echo ""; read -s -n1 -p "Press any key to continue..."; }

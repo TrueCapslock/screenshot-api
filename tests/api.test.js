@@ -82,11 +82,12 @@ describe('GET /v1/admin/users', () => {
   });
 });
 
-describe('GET / redirects to /docs', () => {
-  it('redirects to /docs', async () => {
+describe('GET / serves landing page', () => {
+  it('serves the landing page', async () => {
     const res = await request(app).get('/');
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/docs');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Screenshot API');
+    expect(res.text).toContain('Dashboard');
   });
 });
 

@@ -1,21 +1,5 @@
-## Unreleased
-
-- API: add `GET /v1/account/recent-urls` returning last 10 unique screenshot URLs per user for autocomplete
-- API: add `POST /v1/stripe/verify-session` to immediately confirm checkout and update user tier without waiting for webhook
-- API: add `GET /v1/account/screenshots` to OpenAPI/Swagger spec
-- Dashboard: autocomplete (`<datalist>`) on Try It URL input populated from recent-urls endpoint
-- Dashboard: add Desktop/Tablet/Mobile device icon tags to screenshot list rows
-- Dashboard: add same viewport resolution dropdown (Desktop/Tablet/Mobile/Custom) to HTML render tab
-- Dashboard: pull pricing from `GET /v1/stripe/prices` (real Stripe prices when configured, fallback otherwise)
-- Dashboard: show free tier as formatted price (`$0.00` / `0,00 kr`) instead of "Gratis"/"Free"
-- Dashboard: handle `?session_id=` redirect from Stripe checkout — verify session and show confirmation
-- i18n: translate "last used" in key list (`sist brukt`)
-- i18n: Norwegian date format in key list (`toLocaleDateString('nb')`)
-- i18n: add `never`/`aldri` translation key
-- Admin: show full API key for keys created during admin session (in-memory cache)
-- Logging: replace bare console calls with Winston logger — writes to `logs/app.log` with 10MB file rotation, 5 files kept
-- Dev menu: fix `_pad` calculation on same `local` line — split `_pad` onto its own line so `_left`/`_ver` are usable
-- Dev menu: remove stray `echo "${_pad}"` debug output
-- Stripe: add `quantity: 1` to line items (Stripe API requirement)
-- Config: enable `trust proxy` so `req.protocol` resolves correctly behind HTTPS reverse proxy
-- Docs: create `design.md` with full architecture documentation
+## v1.0.15 (2026-05-15)
+- Set `release` in Sentry init to `screenshot-api@${version}` so errors are tagged with the app version (`src/instrument.js`)
+- Added Sentry release creation to deploy menu (option 8) — creates, associates commits, and finalizes releases via `@sentry/cli` (`dev-menu.sh`)
+- Checks `SENTRY_AUTH_TOKEN` before creating release, reads from `.env` as fallback and exports it for subsequent runs (`dev-menu.sh`)
+- Fixed pipe-to-sed swallowing exit codes in Sentry release steps; uses `PIPESTATUS[0]` so failures in `releases new` skip `set-commits` and `finalize` (`dev-menu.sh`)
