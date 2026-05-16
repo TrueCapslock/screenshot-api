@@ -44,6 +44,7 @@ router.get('/account/screenshots', async (req, res) => {
   const screenshots = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
     .where({ 'api_keys.user_id': req.apiKey.userId })
+    .where('screenshots.hidden', false)
     .select(
       'screenshots.id',
       'screenshots.url',
@@ -64,6 +65,7 @@ router.get('/account/screenshots', async (req, res) => {
   const [{ count }] = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
     .where({ 'api_keys.user_id': req.apiKey.userId })
+    .where('screenshots.hidden', false)
     .count('* as count');
 
   const baseUrl = config.baseUrl;

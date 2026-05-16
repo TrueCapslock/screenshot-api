@@ -77,7 +77,7 @@ router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
         'screenshots.is_baseline': true,
       })
       .whereNotNull('screenshots.storage_path')
-      .whereRaw("(screenshots.options->>'mobile')::boolean = ?", [!!options.mobile])
+      .whereRaw("COALESCE((screenshots.options->>'mobile')::boolean, false) = ?", [!!options.mobile])
       .whereRaw("COALESCE((screenshots.options->>'width')::int, 1280) = ?", [viewportWidth])
       .whereRaw("COALESCE((screenshots.options->>'height')::int, 720) = ?", [viewportHeight])
       .orderBy('screenshots.created_at', 'desc')
@@ -99,7 +99,7 @@ router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
 
     const ext = result.format === 'jpeg' ? 'jpg' : result.format;
     const screenshotFilename = `${crypto.randomUUID()}.${ext}`;
-    const screenshotPath = await saveFile(screenshotFilename, result.buffer);
+    const screenshotPath = await saveFile(screenshotFilename, result.buffer, req.apiKey.userId);
 
     const baselineBuffer = await readFile(baseline.storage_path);
     const [baselineMeta, currentMeta] = await Promise.all([
@@ -143,7 +143,7 @@ router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
       .toBuffer();
 
     const diffFilename = `diff_${crypto.randomUUID()}.png`;
-    const diffPath = await saveFile(diffFilename, diffPng);
+    const diffPath = await saveFile(diffFilename, diffPng, req.apiKey.userId);
 
     const [screenshot] = await db('screenshots')
       .insert({
@@ -199,7 +199,7 @@ router.get('/screenshot/:id/baseline', auth, async (req, res) => {
       'screenshots.is_baseline': true,
     })
     .whereNotNull('screenshots.storage_path')
-    .whereRaw("(screenshots.options->>'mobile')::boolean = ?", [!!opts.mobile])
+    .whereRaw("COALESCE((screenshots.options->>'mobile')::boolean, false) = ?", [!!opts.mobile])
     .whereRaw("COALESCE((screenshots.options->>'width')::int, 1280) = ?", [viewportWidth])
     .whereRaw("COALESCE((screenshots.options->>'height')::int, 720) = ?", [viewportHeight])
     .orderBy('screenshots.created_at', 'desc')

@@ -20,7 +20,7 @@ async function unmarkExistingBaselines(userId, url, options) {
   const oldBaselines = await db('screenshots')
     .whereIn('api_key_id', db('api_keys').select('id').where('user_id', userId))
     .where({ url, is_baseline: true })
-    .whereRaw("(options->>'mobile')::boolean = ?", [!!options.mobile])
+    .whereRaw("COALESCE((options->>'mobile')::boolean, false) = ?", [!!options.mobile])
     .whereRaw("COALESCE((options->>'width')::int, 1280) = ?", [viewportWidth])
     .whereRaw("COALESCE((options->>'height')::int, 720) = ?", [viewportHeight])
     .select('id', 'storage_path');
@@ -103,7 +103,7 @@ router.post('/screenshot', logUsage, async (req, res) => {
 
     const ext = result.format === 'jpeg' ? 'jpg' : result.format;
     const filename = `${crypto.randomUUID()}.${ext}`;
-    const storagePath = await saveFile(filename, result.buffer);
+    const storagePath = await saveFile(filename, result.buffer, req.apiKey.userId);
 
     if (options.baseline) {
       const oldBaselines = await unmarkExistingBaselines(req.apiKey.userId, options.url, options);
@@ -120,6 +120,7 @@ router.post('/screenshot', logUsage, async (req, res) => {
       }
     }
 
+    const isBaseline = options.baseline || false;
     const [screenshot] = await db('screenshots')
       .insert({
         api_key_id: req.apiKey.id,
@@ -129,7 +130,8 @@ router.post('/screenshot', logUsage, async (req, res) => {
         storage_path: storagePath,
         bytes: result.buffer.length,
         status: 'completed',
-        is_baseline: options.baseline || false,
+        is_baseline: isBaseline,
+        hidden: isBaseline,
         completed_at: db.fn.now(),
       })
       .returning('id');
@@ -181,7 +183,7 @@ router.post('/html', logUsage, async (req, res) => {
 
     const ext = result.format === 'jpeg' ? 'jpg' : result.format;
     const filename = `${crypto.randomUUID()}.${ext}`;
-    const storagePath = await saveFile(filename, result.buffer);
+    const storagePath = await saveFile(filename, result.buffer, req.apiKey.userId);
 
     const [screenshot] = await db('screenshots')
       .insert({
@@ -234,7 +236,7 @@ router.post('/screenshot/:id/baseline', async (req, res) => {
       )
       .del();
   }
-  await db('screenshots').where({ id: screenshot.id }).update({ is_baseline: true });
+  await db('screenshots').where({ id: screenshot.id }).update({ is_baseline: true, hidden: true });
   res.json({ message: 'Baseline set', id: screenshot.id });
 });
 

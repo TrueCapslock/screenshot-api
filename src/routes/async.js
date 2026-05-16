@@ -72,6 +72,7 @@ router.post('/screenshot/async', async (req, res) => {
     type: 'url',
     options,
     apiKeyId: req.apiKey.id,
+    userId: req.apiKey.userId,
     screenshotId: screenshot.id,
     webhookUrl: options.webhookUrl,
   });
@@ -138,6 +139,7 @@ router.post('/screenshot/:id/retry', async (req, res) => {
     type: 'url',
     options: opts,
     apiKeyId: req.apiKey.id,
+    userId: req.apiKey.userId,
     screenshotId: newScreenshot.id,
     webhookUrl: opts.webhookUrl,
   });

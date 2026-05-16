@@ -9,20 +9,24 @@ const router = Router();
 
 async function describeGemini(baselineB64, currentB64, mime) {
   const body = {
-    contents: [{
-      parts: [
-        { text: 'You are a UI testing tool. Compare these two screenshots (baseline = left/before, current = right/after). Describe ONLY the visual differences in 1-3 concise bullet points. Focus on layout shifts, color changes, new/hidden elements, text changes, and position changes. Be specific about locations (header, footer, sidebar, main content, etc.). If they are identical, say "No visual differences detected."' },
-        { inline_data: { mime_type: mime, data: baselineB64 } },
-        { inline_data: { mime_type: mime, data: currentB64 } },
-      ],
-    }],
+    contents: [
+      {
+        parts: [
+          {
+            text: 'You are a UI testing tool. Compare these two screenshots (baseline = left/before, current = right/after). Describe ONLY the visual differences in 1-3 concise bullet points. Focus on layout shifts, color changes, new/hidden elements, text changes, and position changes. Be specific about locations (header, footer, sidebar, main content, etc.). If they are identical, say "No visual differences detected."',
+          },
+          { inline_data: { mime_type: mime, data: baselineB64 } },
+          { inline_data: { mime_type: mime, data: currentB64 } },
+        ],
+      },
+    ],
   };
 
   let lastErr = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     if (attempt > 0) {
       const delay = [2000, 4000, 6000, 8000][attempt - 1];
-      await new Promise(r => setTimeout(r, delay));
+      await new Promise((r) => setTimeout(r, delay));
     }
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.geminiApiKey}`,
@@ -49,10 +53,7 @@ async function describeHuggingFace(baselineBuf, currentBuf) {
     sharp(currentBuf).resize({ width: 800, fit: 'inside' }).toBuffer(),
   ]);
 
-  const [leftMeta, rightMeta] = await Promise.all([
-    sharp(left).metadata(),
-    sharp(right).metadata(),
-  ]);
+  const [leftMeta, rightMeta] = await Promise.all([sharp(left).metadata(), sharp(right).metadata()]);
 
   const compositeHeight = Math.max(leftMeta.height, rightMeta.height);
   const compositeWidth = leftMeta.width + rightMeta.width;
@@ -74,7 +75,8 @@ async function describeHuggingFace(baselineBuf, currentBuf) {
 
   const dataUrl = `data:image/png;base64,${composite.toString('base64')}`;
 
-  const prompt = 'The image shows two screenshots side by side (left = baseline/before, right = current/after). Describe ONLY the visual differences between them in 1-3 concise bullet points. Focus on layout shifts, color changes, new/hidden elements, text changes, and position changes. If they look the same, say "No visual differences detected."';
+  const prompt =
+    'The image shows two screenshots side by side (left = baseline/before, right = current/after). Describe ONLY the visual differences between them in 1-3 concise bullet points. Focus on layout shifts, color changes, new/hidden elements, text changes, and position changes. If they look the same, say "No visual differences detected."';
 
   const baseUrl = 'https://api-inference.huggingface.co/models/llava-hf/llava-v1.6-mistral-7b-hf';
 
@@ -91,13 +93,15 @@ async function describeHuggingFace(baselineBuf, currentBuf) {
         },
         body: JSON.stringify({
           ...(path && { model: 'llava-hf/llava-v1.6-mistral-7b-hf' }),
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image_url', image_url: { url: dataUrl } },
-              { type: 'text', text: prompt },
-            ],
-          }],
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'image_url', image_url: { url: dataUrl } },
+                { type: 'text', text: prompt },
+              ],
+            },
+          ],
           max_tokens: 300,
           ...(!path && { options: { wait_for_model: true } }),
         }),
@@ -137,7 +141,13 @@ router.get('/screenshot/:id/describe', auth, async (req, res) => {
     const screenshot = await db('screenshots')
       .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
       .where({ 'screenshots.id': req.params.id, 'api_keys.user_id': req.apiKey.userId })
-      .select('screenshots.url', 'screenshots.storage_path', 'screenshots.baseline_id', 'screenshots.format', 'screenshots.diff_percentage')
+      .select(
+        'screenshots.url',
+        'screenshots.storage_path',
+        'screenshots.baseline_id',
+        'screenshots.format',
+        'screenshots.diff_percentage',
+      )
       .first();
 
     if (!screenshot) {
@@ -183,11 +193,7 @@ router.get('/screenshot/:id/describe', auth, async (req, res) => {
       description = describeSimple(screenshot.diff_percentage || 0);
     } else {
       const mime = screenshot.format === 'jpeg' ? 'image/jpeg' : 'image/png';
-      description = await describeGemini(
-        baselineBuf.toString('base64'),
-        currentBuf.toString('base64'),
-        mime,
-      );
+      description = await describeGemini(baselineBuf.toString('base64'), currentBuf.toString('base64'), mime);
     }
 
     res.json({ description, provider });

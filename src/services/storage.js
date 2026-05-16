@@ -24,24 +24,26 @@ function useS3() {
   return !!(config.storage.endpoint && config.storage.accessKey && config.storage.secretKey);
 }
 
-export async function saveFile(filename, buffer) {
+export async function saveFile(filename, buffer, userId) {
+  const filePath = userId ? `${userId}/${filename}` : filename;
+
   if (useS3()) {
     const client = getS3();
     await client.send(
       new PutObjectCommand({
         Bucket: config.storage.bucket,
-        Key: filename,
+        Key: filePath,
         Body: buffer,
       }),
     );
-    return filename;
+    return filePath;
   }
 
   const dir = config.storage.localDir;
-  await fs.mkdir(dir, { recursive: true });
-  const filePath = path.join(dir, filename);
-  await fs.writeFile(filePath, buffer);
-  return filePath;
+  const fullPath = path.join(dir, filePath);
+  await fs.mkdir(path.dirname(fullPath), { recursive: true });
+  await fs.writeFile(fullPath, buffer);
+  return fullPath;
 }
 
 export async function readFile(filePath) {

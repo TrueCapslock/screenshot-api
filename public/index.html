@@ -133,6 +133,8 @@
   .usage-bar { height: 8px; background: var(--border-light); border-radius: 4px; margin-top: 8px; overflow: hidden; }
   .usage-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.3s; }
   .empty { color: var(--text-muted); font-style: italic; font-size: 14px; padding: 12px 0; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .flex { display: flex; gap: 8px; align-items: center; }
   .dash-panel.active { display: block; }
   .dash-panel { display: none; }
@@ -240,6 +242,7 @@
     <div class="tab-bar" style="border-radius:8px;overflow:hidden;">
       <button class="tab-btn active" onclick="switchDashboardTab('account')" id="dashTabBtnAccount" data-i18n="account">Account</button>
       <button class="tab-btn" onclick="switchDashboardTab('try')" id="dashTabBtnTry" data-i18n="tryIt">Try It</button>
+      <button class="tab-btn" onclick="switchDashboardTab('alerts')" id="dashTabBtnAlerts">&#128276; <span data-i18n="alerts">Alerts</span></button>
       <button class="tab-btn" onclick="switchDashboardTab('admin')" id="dashTabBtnAdmin" style="display:none;">&#9878; Admin</button>
     </div>
   </div>
@@ -333,12 +336,7 @@
             </label>
             <input type="text" id="testCookieSelector" data-i18n-placeholder="cookieSelectorPlaceholder" placeholder="Custom selector (optional)" style="width:220px;padding:4px 6px;border-radius:4px;font-size:13px;display:none;">
           </div>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--text-secondary);" id="compareLabel">
-              <input type="checkbox" id="testCompare"> <span>Compare to baseline</span> <span id="compareLock" style="display:none;font-size:12px;color:#999;" title="Pro &amp; Business only">&#x1f512;</span>
-            </label>
-            <span id="compareStatus" style="font-size:12px;color:var(--text-muted);"></span>
-          </div>
+          
         </div>
         <div id="tryHtmlSection" style="display:none;">
           <p style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;" data-i18n="tryHtmlDesc">Render HTML markup to an image.</p>
@@ -372,7 +370,7 @@
 
       <div class="card">
         <h2 style="margin:0;display:flex;align-items:center;gap:6px;"><span data-i18n="screenshots">Screenshots</span> <span id="screenshotCountBadge" class="count-badge" style="display:none;">0</span></h2>
-        <p style="margin:4px 0 0;font-size:12px;color:var(--text-muted);">Stored for <span id="retentionHours">24</span> hours, then auto-deleted</p>
+        <p style="margin:4px 0 0;font-size:12px;color:var(--text-muted);" id="retentionText">Stored for <span id="retentionHours">24</span> hours, then auto-deleted</p>
         <div id="screenshotsList" style="margin-top:12px;">
           <div class="empty" data-i18n="loading">Loading...</div>
         </div>
@@ -380,16 +378,90 @@
           <img id="previewImg" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
           <div style="margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="closePreview()" data-i18n="closePreview">Close</button></div>
         </div>
-        <div id="previewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
-          <div class="modal">
-            <div class="modal-header">
-              <h3 id="modalTitle">Screenshot</h3>
-              <button class="btn btn-secondary btn-sm" onclick="closeModal()" data-i18n="closePreview">Close</button>
+      </div>
+    </div>
+
+    <div id="dashPanelAlerts" class="dash-panel">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;">&#128276; <span data-i18n="alerts">Alerts</span></h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateAlert()" data-i18n="newAlert">+ New Alert</button>
+        </div>
+
+        <div id="createAlertForm" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--code-bg);border-radius:6px;position:relative;">
+          <div id="alertFormOverlay" class="hidden" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);border-radius:6px;z-index:5;align-items:center;justify-content:center;">
+            <div style="display:flex;align-items:center;gap:8px;background:var(--card-bg);padding:12px 20px;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,0.2);">
+              <div class="spinner"></div>
+              <span style="font-size:14px;" data-i18n="saving">Saving...</span>
             </div>
-            <div class="modal-tabs" id="modalTabs"></div>
-            <div class="modal-body" id="modalBody"></div>
+          </div>
+          <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;">
+            <div>
+              <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:2px;" data-i18n="alertName">Name</label>
+              <input type="text" id="alertName" data-i18n-placeholder="alertNamePlaceholder" placeholder="My Alert" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:2px;" data-i18n="alertUrl">URL</label>
+              <input type="text" id="alertUrl" placeholder="https://example.com" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:2px;" data-i18n="alertInterval">Check interval (minutes)</label>
+              <input type="number" id="alertInterval" value="60" min="1" max="43200" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:2px;" data-i18n="alertThreshold">Threshold (%)</label>
+              <input type="number" id="alertThreshold" value="0" min="0" max="100" step="0.1" style="width:100%;">
+              <span style="font-size:11px;color:var(--text-muted);" data-i18n="alertThresholdHint">0 = any change triggers alert</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--text-secondary);align-items:center;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="checkbox" id="alertFullPage" checked> <span data-i18n="fullPage">Full page</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;">
+              <span data-i18n="resolution">Resolution</span>
+              <select id="alertResolution" onchange="toggleAlertResolution()" style="padding:4px 6px;border-radius:4px;font-size:13px;">
+                <option value="desktop">Desktop (1280x720)</option>
+                <option value="tablet">Tablet (768x1024)</option>
+                <option value="mobile">Mobile (390x844)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <label id="alertWidthLabel" style="display:flex;align-items:center;gap:4px;display:none;">
+              <span data-i18n="width">Width</span> <input type="number" id="alertWidth" value="1280" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
+            </label>
+            <label id="alertHeightLabel" style="display:flex;align-items:center;gap:4px;display:none;">
+              <span data-i18n="height">Height</span> <input type="number" id="alertHeight" value="720" min="1" max="7680" style="width:70px;padding:4px 6px;border-radius:4px;font-size:13px;">
+            </label>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-primary btn-sm" id="createAlertBtn" onclick="createAlert()" data-i18n="create">Create</button>
+            <button class="btn btn-secondary btn-sm" id="createAlertCancelBtn" onclick="hideCreateAlert()" data-i18n="cancel">Cancel</button>
           </div>
         </div>
+
+        <div id="alertList"><div class="empty" data-i18n="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <div id="previewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modalTitle">Screenshot</h3>
+          <button class="btn btn-secondary btn-sm" onclick="closeModal()" data-i18n="closePreview">Close</button>
+        </div>
+        <div class="modal-tabs" id="modalTabs"></div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
+    <div id="alertRunsModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeAlertRunsModal()">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="alertRunsModalTitle">Alert Runs</h3>
+          <button class="btn btn-secondary btn-sm" onclick="closeAlertRunsModal()" data-i18n="closePreview">Close</button>
+        </div>
+        <div id="alertRunsModalBody" style="padding:20px;"></div>
       </div>
     </div>
 
@@ -611,7 +683,8 @@ async function loadAccount() {
     document.getElementById('accUsage').textContent = data.usage;
     document.getElementById('dashTabBtnAdmin').style.display = data.user.is_admin ? '' : 'none';
     if (data.user.is_admin) loadAdminUsers();
-    document.getElementById('retentionHours').textContent = data.screenshot_retention_hours || 24;
+    const hours = data.screenshot_retention_hours || 24;
+    document.getElementById('retentionText').textContent = t('retentionText').replace('{hours}', hours);
 
     const tier = data.user.tier;
     const limits = { free: 10, starter: 500, pro: 2500, business: 15000 };
@@ -644,8 +717,6 @@ async function loadAccount() {
     const badge = document.getElementById('tierDisplay');
     badge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
     badge.className = 'tier-badge tier-' + tier;
-
-    updateCompareUI();
 
     renderKeys(data.keys);
 
@@ -1033,24 +1104,6 @@ async function downloadScreenshot(id) {
   return false;
 }
 
-function updateCompareUI() {
-  const tier = (userData && userData.user && userData.user.tier) || 'free';
-  const canCompare = tier === 'pro' || tier === 'business';
-  const cb = document.getElementById('testCompare');
-  const lock = document.getElementById('compareLock');
-  const label = document.getElementById('compareLabel');
-  if (!canCompare) {
-    cb.checked = false;
-    cb.disabled = true;
-    lock.style.display = 'inline';
-    if (label) label.style.cursor = 'not-allowed';
-  } else {
-    cb.disabled = false;
-    lock.style.display = 'none';
-    if (label) label.style.cursor = 'pointer';
-  }
-}
-
 async function describeDiff(id, btn) {
   const resultDiv = btn.parentElement.querySelector('[id$="DescribeResult"]');
   if (!resultDiv) return;
@@ -1078,22 +1131,6 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
-}
-
-async function setBaseline(id) {
-  try {
-    const res = await api('/v1/screenshot/' + id + '/baseline', { method: 'POST' });
-    if (res.ok) {
-      showToast('Baseline set', 'success');
-      loadScreenshots();
-    } else {
-      const d = await res.json();
-      showToast(d.message || 'Failed', 'error');
-    }
-  } catch {
-    showToast('Network error', 'error');
-  }
-  return false;
 }
 
 async function deleteScreenshot(id) {
@@ -1134,6 +1171,7 @@ function switchDashboardTab(tab) {
   document.querySelectorAll('#accountSection .dash-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('dashPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   if (tab === 'try') loadScreenshots();
+  if (tab === 'alerts') loadAlerts();
 }
 
 async function toggleScreenshots() {
@@ -1171,7 +1209,6 @@ async function loadScreenshots(more) {
         actions = '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
         actions += '<a href="#" onclick="return previewScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="viewScreenshot">View</a>';
         actions += '<a href="#" onclick="return downloadScreenshot(\'' + s.id + '\')" class="btn btn-secondary btn-sm" data-i18n="downloadScreenshot">Download</a>';
-        if (!s.is_baseline) actions += '<a href="#" onclick="return setBaseline(\'' + s.id + '\')" class="btn btn-secondary btn-sm" style="font-size:11px;">Set Baseline</a>';
         if (s.diff_percentage !== null) actions += '<a href="#" onclick="return viewDiff(\'' + s.id + '\')" class="btn btn-secondary btn-sm" style="font-size:11px;">View Diff</a>';
         actions += '<a href="#" onclick="return deleteScreenshot(\'' + s.id + '\')" class="btn btn-danger btn-sm" style="font-size:11px;">Delete</a>';
         actions += '</div>';
@@ -1313,54 +1350,30 @@ async function testScreenshot() {
     width = 1280;
     height = 720;
   }
-  const compare = document.getElementById('testCompare').checked;
   const result = document.getElementById('testResult');
-  const status = document.getElementById('compareStatus');
   result.innerHTML = '<p style="color:#666;">' + t('capturing') + '</p>';
   try {
-    const endpoint = compare ? '/v1/compare' : '/v1/screenshot';
-    const res = await fetch(`${API}${endpoint}`, {
+    const res = await fetch(`${API}/v1/screenshot`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
       body: JSON.stringify({ url, format, fullPage, acceptCookies, width, height, ...(mobile ? { mobile } : {}) }),
     });
     if (res.ok) {
-      if (compare) {
-        const data = await res.json();
-        const pct = data.diff_percentage;
-        const pctColor = pct > 0.1 ? '#dc3545' : '#28a745';
-        result.innerHTML = `
-          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${t('capturedIn')} ${data.duration_ms}ms</p>
-          <p style="font-size:14px;margin-bottom:8px;">Diff: <span style="color:${pctColor};font-weight:700;">${pct}%</span> (${data.diff_pixels} of ${data.total_pixels} pixels)</p>
-        `;
-        status.textContent = 'Baseline found — compared';
-        status.style.color = '#28a745';
-      } else {
-        const blob = await res.blob();
-        const imgUrl = URL.createObjectURL(blob);
-        const duration = res.headers.get('X-Duration-Ms');
-        const isBaseline = res.headers.get('X-Baseline');
-        result.innerHTML = `
-          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">${t('capturedIn')} ${duration}ms${isBaseline ? ' &middot; Saved as baseline' : ''}</p>
-          <img src="${imgUrl}" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
-        `;
-        const newUsage = parseInt(document.getElementById('accUsage').textContent) + 1;
-        document.getElementById('accUsage').textContent = newUsage;
-        document.getElementById('accScreenshotsCount').textContent = parseInt(document.getElementById('accScreenshotsCount').textContent) + 1;
-        const lmt = parseInt(document.getElementById('accLimit').textContent);
-        document.getElementById('usageBarFill').style.width = Math.min(100, (newUsage / lmt) * 100) + '%';
-      }
+      const blob = await res.blob();
+      const imgUrl = URL.createObjectURL(blob);
+      const duration = res.headers.get('X-Duration-Ms');
+      result.innerHTML = `
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">${t('capturedIn')} ${duration}ms</p>
+        <img src="${imgUrl}" style="max-width:100%;border:1px solid var(--border);border-radius:4px;">
+      `;
+      const newUsage = parseInt(document.getElementById('accUsage').textContent) + 1;
+      document.getElementById('accUsage').textContent = newUsage;
+      document.getElementById('accScreenshotsCount').textContent = parseInt(document.getElementById('accScreenshotsCount').textContent) + 1;
+      const lmt = parseInt(document.getElementById('accLimit').textContent);
+      document.getElementById('usageBarFill').style.width = Math.min(100, (newUsage / lmt) * 100) + '%';
       loadScreenshots();
     } else {
       const data = await res.json();
-      if (compare && res.status === 404) {
-        status.textContent = 'No baseline found. Take a screenshot with "Set Baseline" first.';
-        status.style.color = '#dc3545';
-      } else if (compare && res.status === 403) {
-        status.textContent = 'Compare is Pro & Business only';
-        status.style.color = '#dc3545';
-        updateCompareUI();
-      }
       result.innerHTML = `<p style="color:#dc3545;">${data.message}</p>`;
     }
   } catch (e) {
@@ -1457,10 +1470,47 @@ const LANG = {
     monthlyLimit: 'Monthly limit',
     showHistory: 'Show history',
     hideHistory: 'Hide history',
+    retentionText: 'Stored for {hours} hours, then auto-deleted',
     viewScreenshot: 'View',
     downloadScreenshot: 'Download',
     noScreenshots: 'No screenshots yet.',
     closePreview: 'Close',
+    alerts: 'Alerts',
+    newAlert: '+ New Alert',
+    alertName: 'Name',
+    alertNamePlaceholder: 'My Alert',
+    alertUrl: 'URL',
+    alertInterval: 'Check interval (minutes)',
+    alertThreshold: 'Threshold (%)',
+    alertThresholdHint: '0 = any change triggers alert',
+    noAlerts: 'No alerts yet. Create one to monitor a URL.',
+    every: 'every',
+    threshold: 'Threshold',
+    lastCheck: 'Last check',
+    enable: 'Enable',
+    disable: 'Disable',
+    delete: 'Delete',
+    alertNameRequired: 'Alert name is required',
+    alertCreated: 'Alert created',
+    alertCreateFailed: 'Failed to create alert',
+    edit: 'Edit',
+    alertUpdated: 'Alert updated',
+    alertDeleted: 'Alert deleted',
+    alertDeleteFailed: 'Failed to delete alert',
+    alertEnabled: 'Alert enabled',
+    alertDisabled: 'Alert disabled',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    deleteAlertConfirm: 'Delete this alert?',
+    runs: 'Runs',
+    noRuns: 'No runs yet.',
+    triggered: 'Triggered',
+    ok: 'OK',
+    view: 'View',
+    diff: 'Diff',
+    setBaseline: 'Set as Baseline',
+    setBaselineConfirm: 'This will replace the current baseline and delete all prior run screenshots. Continue?',
+    baselineUpdated: 'Baseline updated',
   },
   nb: {
     pageTitle: 'Screenshot API – Skjermbilde API',
@@ -1550,10 +1600,47 @@ const LANG = {
     monthlyLimit: 'Månedsgrense',
     showHistory: 'Vis historikk',
     hideHistory: 'Skjul historikk',
+    retentionText: 'Lagres i {hours} timer, så slettes automatisk',
     viewScreenshot: 'Vis',
     downloadScreenshot: 'Last ned',
     noScreenshots: 'Ingen skjermbilder ennå.',
     closePreview: 'Lukk',
+    alerts: 'Varsler',
+    newAlert: '+ Nytt varsel',
+    alertName: 'Navn',
+    alertNamePlaceholder: 'Mitt varsel',
+    alertUrl: 'URL',
+    alertInterval: 'Sjekk intervall (minutter)',
+    alertThreshold: 'Terskel (%)',
+    alertThresholdHint: '0 = enhver endring utløser varsel',
+    noAlerts: 'Ingen varsler ennå. Opprett et for å overvåke en URL.',
+    every: 'hver',
+    threshold: 'Terskel',
+    lastCheck: 'Sist sjekket',
+    enable: 'Aktiver',
+    disable: 'Deaktiver',
+    delete: 'Slett',
+    alertNameRequired: 'Varselnavn er påkrevd',
+    alertCreated: 'Varsel opprettet',
+    alertCreateFailed: 'Kunne ikke opprette varsel',
+    edit: 'Rediger',
+    alertUpdated: 'Varsel oppdatert',
+    alertDeleted: 'Varsel slettet',
+    alertDeleteFailed: 'Kunne ikke slette varsel',
+    alertEnabled: 'Varsel aktivert',
+    alertDisabled: 'Varsel deaktivert',
+    enabled: 'Aktivert',
+    disabled: 'Deaktivert',
+    deleteAlertConfirm: 'Slett dette varselet?',
+    runs: 'Kjøringer',
+    noRuns: 'Ingen kjøringer ennå.',
+    triggered: 'Utløst',
+    ok: 'OK',
+    view: 'Vis',
+    diff: 'Differanse',
+    setBaseline: 'Sett som referanse',
+    setBaselineConfirm: 'Dette vil erstatte gjeldende referanse og slette alle tidligere kjøringsbilder. Fortsette?',
+    baselineUpdated: 'Referanse oppdatert',
   },
 };
 
@@ -1583,7 +1670,248 @@ function toggleLang() {
   applyLanguage();
   if (apiKey && userData) {
     loadAccount();
-    updateCompareUI();
+  }
+}
+
+function toggleAlertResolution() {
+  const sel = document.getElementById('alertResolution').value;
+  document.getElementById('alertWidthLabel').style.display = sel === 'custom' ? 'flex' : 'none';
+  document.getElementById('alertHeightLabel').style.display = sel === 'custom' ? 'flex' : 'none';
+}
+
+function showCreateAlert() {
+  document.getElementById('createAlertForm').classList.remove('hidden');
+  document.getElementById('alertName').focus();
+}
+
+function hideCreateAlert() {
+  document.getElementById('createAlertForm').classList.add('hidden');
+  _editingAlertId = null;
+  document.getElementById('createAlertBtn').textContent = t('create');
+}
+
+let _editingAlertId = null;
+
+async function editAlert(id) {
+  const res = await api('/v1/alerts');
+  if (!res.ok) return;
+  const data = await res.json();
+  const a = data.alerts.find(x => x.id === id);
+  if (!a) return;
+  const opts = typeof a.options === 'string' ? JSON.parse(a.options) : a.options || {};
+
+  document.getElementById('alertName').value = a.name;
+  document.getElementById('alertUrl').value = a.url;
+  document.getElementById('alertInterval').value = a.interval_minutes;
+  document.getElementById('alertThreshold').value = a.threshold;
+  document.getElementById('alertFullPage').checked = opts.fullPage !== false;
+
+  let resolution;
+  if (opts.mobile) resolution = 'mobile';
+  else if (opts.width === 768 && opts.height === 1024) resolution = 'tablet';
+  else if (opts.width && opts.width !== 1280 && opts.height && opts.height !== 720) resolution = 'custom';
+  else resolution = 'desktop';
+  document.getElementById('alertResolution').value = resolution;
+  toggleAlertResolution();
+  if (resolution === 'custom') {
+    document.getElementById('alertWidth').value = opts.width || '';
+    document.getElementById('alertHeight').value = opts.height || '';
+  }
+
+  _editingAlertId = id;
+  document.getElementById('createAlertBtn').textContent = t('save') || 'Save';
+  document.getElementById('createAlertForm').classList.remove('hidden');
+  document.getElementById('alertName').focus();
+}
+
+async function loadAlerts() {
+  const list = document.getElementById('alertList');
+  list.innerHTML = '<div class="empty">' + t('loading') + '</div>';
+  try {
+    const res = await api('/v1/alerts');
+    if (!res.ok) { list.innerHTML = '<div class="empty">' + t('loadFailed') + '</div>'; return; }
+    const data = await res.json();
+    if (!data.alerts || data.alerts.length === 0) {
+      list.innerHTML = '<div class="empty" data-i18n="noAlerts">No alerts yet. Create one to monitor a URL.</div>';
+      applyLanguage();
+      return;
+    }
+    list.innerHTML = data.alerts.map(a => {
+      const opts = typeof a.options === 'string' ? JSON.parse(a.options) : a.options || {};
+      const device = opts.mobile ? 'Mobile' : opts.width === 768 && opts.height === 1024 ? 'Tablet' : 'Desktop';
+      const lastCheck = a.last_checked_at ? new Date(a.last_checked_at).toLocaleString() : '-';
+      const barColor = a.enabled ? (a.last_triggered ? '#dc3545' : '#28a745') : '#999';
+      const statusText = a.enabled ? (t('enabled') || 'Enabled') : (a.last_error_message || t('disabled') || 'Disabled');
+      return '<div class="screenshot-row" style="cursor:pointer;" onclick="viewAlertRuns(\'' + a.id + '\',\'' + esc(a.name) + '\')">' +
+        '<div style="width:4px;align-self:stretch;border-radius:2px;background:' + barColor + ';flex-shrink:0;"></div>' +
+        '<div class="screenshot-info">' +
+          '<div class="screenshot-url">' + esc(a.name) + ' <span style="font-size:11px;color:' + barColor + ';font-weight:600;">' + statusText + '</span></div>' +
+          '<div class="screenshot-meta">' + esc(a.url) + ' &middot; ' + device + ' &middot; ' + t('every') + ' ' + a.interval_minutes + 'min &middot; ' + t('threshold') + ': ' + a.threshold + '% &middot; ' + t('lastCheck') + ': ' + lastCheck + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px;flex-shrink:0;" onclick="event.stopPropagation();">' +
+          '<button class="btn btn-secondary btn-sm" onclick="toggleAlert(\'' + a.id + '\',' + a.enabled + ')" style="font-size:11px;">' + (a.enabled ? t('disable') : t('enable')) + '</button>' +
+          '<button class="btn btn-secondary btn-sm" onclick="editAlert(\'' + a.id + '\')" style="font-size:11px;">' + t('edit') + '</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteAlert(\'' + a.id + '\')" style="font-size:11px;">' + t('delete') + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    applyLanguage();
+  } catch {
+    list.innerHTML = '<div class="empty">' + t('networkError') + '</div>';
+  }
+}
+
+async function viewAlertRuns(alertId, alertName) {
+  const modal = document.getElementById('alertRunsModal');
+  const body = document.getElementById('alertRunsModalBody');
+  const title = document.getElementById('alertRunsModalTitle');
+  title.textContent = alertName + ' — ' + (t('runs') || 'Runs');
+  modal.style.display = 'flex';
+  body.innerHTML = '<p style="color:var(--text-muted);">' + t('loading') + '</p>';
+  try {
+    const res = await api('/v1/alerts/' + alertId + '/runs');
+    if (!res.ok) { body.innerHTML = '<p style="color:var(--text-danger);">' + t('loadFailed') + '</p>'; return; }
+    const data = await res.json();
+    if (!data.runs || data.runs.length === 0) {
+      body.innerHTML = '<p class="empty">' + (t('noRuns') || 'No runs yet.') + '</p>';
+      return;
+    }
+    body.innerHTML = '<div style="max-height:60vh;overflow-y:auto;">' + data.runs.map(r => {
+      const date = new Date(r.created_at).toLocaleString();
+      const triggeredColor = r.triggered ? '#dc3545' : '#28a745';
+      const triggeredText = r.triggered ? (t('triggered') || 'Triggered') : (t('ok') || 'OK');
+      const viewBtn = r.triggered && r.screenshot_id
+        ? '<button class="btn btn-secondary btn-sm" onclick="closeAlertRunsModal();openPreview(\'' + r.screenshot_id + '\',\'diff\')" style="font-size:11px;">' + (t('view') || 'View') + '</button>'
+        : '';
+      const setBaselineBtn = r.triggered && r.screenshot_id
+        ? '<button class="btn btn-primary btn-sm" onclick="setRunAsBaseline(\'' + alertId + '\',\'' + r.id + '\')" style="font-size:11px;">' + (t('setBaseline') || 'Set as Baseline') + '</button>'
+        : '';
+      return '<div class="screenshot-row">' +
+        '<div class="screenshot-info">' +
+          '<div class="screenshot-meta">' + date + ' &middot; ' + t('diff') + ': <span style="font-weight:600;color:' + triggeredColor + ';">' + r.diff_percentage + '%</span> &middot; ' + t('threshold') + ': ' + r.threshold + '%</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">' +
+          '<span style="font-size:12px;font-weight:600;color:' + triggeredColor + ';">' + triggeredText + '</span>' +
+          setBaselineBtn +
+          viewBtn +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  } catch {
+    body.innerHTML = '<p style="color:var(--text-danger);">' + t('networkError') + '</p>';
+  }
+}
+
+function closeAlertRunsModal() {
+  document.getElementById('alertRunsModal').style.display = 'none';
+}
+
+async function setRunAsBaseline(alertId, runId) {
+  const msg = t('setBaselineConfirm') || 'This will replace the current baseline and delete all prior run screenshots. Continue?';
+  if (!confirm(msg)) return;
+  try {
+    const res = await api('/v1/alerts/' + alertId + '/runs/' + runId + '/set-baseline', { method: 'POST' });
+    if (res.ok) {
+      showToast(t('baselineUpdated') || 'Baseline updated from run', 'success');
+      loadAlerts();
+      viewAlertRuns(alertId, '');
+    } else {
+      const d = await res.json();
+      showToast(d.message || 'Failed', 'error');
+    }
+  } catch {
+    showToast(t('networkError'), 'error');
+  }
+}
+
+async function createAlert() {
+  const name = document.getElementById('alertName').value.trim();
+  const url = document.getElementById('alertUrl').value.trim();
+  const interval_minutes = parseInt(document.getElementById('alertInterval').value, 10) || 60;
+  const threshold = parseFloat(document.getElementById('alertThreshold').value) || 0;
+  const fullPage = document.getElementById('alertFullPage').checked;
+  const resolution = document.getElementById('alertResolution').value;
+  let width, height, mobile;
+  if (resolution === 'mobile') {
+    mobile = true;
+    width = 390;
+    height = 844;
+  } else if (resolution === 'tablet') {
+    width = 768;
+    height = 1024;
+  } else if (resolution === 'custom') {
+    width = parseInt(document.getElementById('alertWidth').value, 10) || 1280;
+    height = parseInt(document.getElementById('alertHeight').value, 10) || 720;
+  } else {
+    width = 1280;
+    height = 720;
+  }
+  if (!name) return showToast(t('alertNameRequired'), 'error');
+  if (!url) return showToast(t('enterUrl'), 'error');
+
+  const spinner = document.getElementById('alertFormOverlay');
+  const btn = document.getElementById('createAlertBtn');
+  const cancelBtn = document.getElementById('createAlertCancelBtn');
+  spinner.classList.remove('hidden');
+  spinner.style.display = 'flex';
+  btn.disabled = true;
+  cancelBtn.disabled = true;
+
+  try {
+    const body = JSON.stringify({ name, url, width, height, mobile, fullPage, interval_minutes, threshold });
+    let res;
+    if (_editingAlertId) {
+      res = await api('/v1/alerts/' + _editingAlertId, { method: 'PUT', body });
+    } else {
+      res = await api('/v1/alerts', { method: 'POST', body });
+    }
+    if (res.ok) {
+      showToast(_editingAlertId ? t('alertUpdated') || 'Alert updated' : t('alertCreated'), 'success');
+      document.getElementById('alertName').value = '';
+      document.getElementById('alertUrl').value = '';
+      hideCreateAlert();
+      loadAlerts();
+    } else {
+      const d = await res.json();
+      showToast(d.message || t('alertCreateFailed'), 'error');
+    }
+  } catch {
+    showToast(t('networkError'), 'error');
+  }
+
+  spinner.classList.add('hidden');
+  spinner.style.display = '';
+  btn.disabled = false;
+  cancelBtn.disabled = false;
+}
+
+async function deleteAlert(id) {
+  if (!confirm(t('deleteAlertConfirm'))) return;
+  try {
+    const res = await api('/v1/alerts/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      showToast(t('alertDeleted'), 'success');
+      loadAlerts();
+    } else {
+      showToast(t('alertDeleteFailed'), 'error');
+    }
+  } catch {
+    showToast(t('networkError'), 'error');
+  }
+}
+
+async function toggleAlert(id, currentlyEnabled) {
+  try {
+    const res = await api('/v1/alerts/' + id, {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: !currentlyEnabled }),
+    });
+    if (res.ok) {
+      showToast(currentlyEnabled ? t('alertDisabled') : t('alertEnabled'), 'success');
+      loadAlerts();
+    }
+  } catch {
+    showToast(t('networkError'), 'error');
   }
 }
 
@@ -1671,6 +1999,10 @@ async function viewAdminUser(id) {
         <div class="field" style="margin-top:12px;">
           <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Name</label>
           <input type="text" id="adminEditName" value="${esc(u.name || '')}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--input-bg);color:var(--text);">
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">User ID</label>
+          <input type="text" value="${esc(u.id)}" disabled style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace;background:var(--input-bg);color:var(--text-muted);">
         </div>
         <div class="field" style="margin-top:12px;">
           <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Tier</label>
@@ -1820,7 +2152,6 @@ if (urlParams.has('session_id') && apiKey) {
 }
 if (apiKey) {
   enterDashboard();
-  updateCompareUI();
   loadAccount();
 }
 </script>

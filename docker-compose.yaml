@@ -55,6 +55,23 @@ services:
       - screenshots:/app/screenshots
     command: node src/workers/renderer.js
 
+  alert-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/screenshot_api
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - screenshots:/app/screenshots
+    command: node src/workers/alert-checker.js
+
 volumes:
   pgdata:
   screenshots:

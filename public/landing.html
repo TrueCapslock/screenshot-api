@@ -49,9 +49,9 @@
   .code-snippet { background: #1a1a2e; color: #a0d0ff; border-radius: 8px; padding: 20px 24px; font-family: "SF Mono","Fira Code",monospace; font-size: .85rem; overflow-x: auto; }
   .code-snippet .comment { color: #6a8aae; }
   footer { text-align: center; padding: 32px 0; font-size: .85rem; color: #999; border-top: 1px solid #e8e8e8; }
-  .lang-nb { display:none; }
   @media (max-width: 600px) { header h1 { font-size: 2rem; } header { padding: 40px 0 60px; } }
 </style>
+<style id="langStyle">.lang-nb{display:none}</style>
 </head>
 <body>
 
@@ -269,22 +269,21 @@
 
 <script>
 (function() {
-  const lang = localStorage.getItem('lang') || 'en';
+  var lang = localStorage.getItem('lang') || 'en';
   document.documentElement.lang = lang;
-  document.querySelectorAll('.lang-' + lang).forEach(el => el.style.display = '');
-  document.querySelectorAll('.lang-' + (lang === 'nb' ? 'en' : 'nb')).forEach(el => el.style.display = 'none');
+  document.getElementById('langStyle').textContent = '.lang-' + (lang === 'nb' ? 'en' : 'nb') + '{display:none}';
   var btn = document.getElementById('langBtn');
   if (btn) btn.textContent = lang === 'nb' ? 'English' : 'Norsk';
+  document.querySelectorAll('title[lang]').forEach(function(el) {
+    el.style.display = el.getAttribute('lang') === lang ? '' : 'none';
+  });
 })();
 
 function toggleLang() {
-  var current = document.documentElement.lang;
-  var next = current === 'nb' ? 'en' : 'nb';
+  var next = document.documentElement.lang === 'nb' ? 'en' : 'nb';
   document.documentElement.lang = next;
   localStorage.setItem('lang', next);
-  document.querySelectorAll('.lang-en, .lang-nb').forEach(function(el) {
-    el.style.display = el.classList.contains('lang-' + next) ? '' : 'none';
-  });
+  document.getElementById('langStyle').textContent = '.lang-' + (next === 'nb' ? 'en' : 'nb') + '{display:none}';
   var btn = document.getElementById('langBtn');
   if (btn) btn.textContent = next === 'nb' ? 'English' : 'Norsk';
   document.querySelectorAll('title[lang]').forEach(function(el) {

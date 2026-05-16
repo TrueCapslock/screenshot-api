@@ -4,6 +4,8 @@ import app from './app.js';
 import config from './config.js';
 import db from './db/knex.js';
 import { startCleanup } from './cleanup.js';
+import { startAlertChecker } from './alert-checker.js';
+import { cleanupOrphans } from './orphan-cleanup.js';
 import logger from './services/logger.js';
 
 const origLog = console.log;
@@ -31,6 +33,9 @@ async function start() {
   }
 
   startCleanup();
+  startAlertChecker();
+  cleanupOrphans();
+  setInterval(cleanupOrphans, 60 * 60 * 1000);
 
   app.listen(config.port, () => {
     console.log(`Screenshot API listening on port ${config.port} [${config.env}]`);

@@ -6,7 +6,7 @@ import config from '../config.js';
 import crypto from 'crypto';
 
 async function processJob(job) {
-  const { type, options, apiKeyId: _apiKeyId, screenshotId } = job.data;
+  const { type, options, apiKeyId: _apiKeyId, screenshotId, userId } = job.data;
 
   let result;
   if (type === 'html') {
@@ -17,7 +17,7 @@ async function processJob(job) {
 
   const ext = result.format === 'jpeg' ? 'jpg' : result.format;
   const filename = `${crypto.randomUUID()}.${ext}`;
-  const storagePath = await saveFile(filename, result.buffer);
+  const storagePath = await saveFile(filename, result.buffer, userId);
 
   await db('screenshots').where({ id: screenshotId }).update({
     storage_path: storagePath,

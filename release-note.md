@@ -1,10 +1,28 @@
-## v1.0.18 (2026-05-16)
-- AI Describe: added `AI_PROVIDER` config option supporting `gemini` (default), `huggingface`, and `simple` (no API key needed) providers (`src/routes/describe.js`, `src/config.js`)
-- AI Describe: Hugging Face provider stitches baseline and current images side by side and sends to LLaVA multimodal model via chat completions API (`src/routes/describe.js`)
-- AI Describe: `simple` provider generates a basic description from diff percentage without any external API (`src/routes/describe.js`)
-- Landing page: added Norwegian translation with language toggle button (`.lang-en`/`.lang-nb` classes, `localStorage` persistence) (`public/landing.html`)
-- Landing page: made AI describe feature description generic (no longer mentions Gemini specifically) (`public/landing.html`)
-- Swagger: use relative server URL (`/`) instead of dynamic protocol detection so Try It requests work over both HTTP and HTTPS without mixed-content errors (`src/app.js`)
-- Sentry: stopped forwarding `console.log`/info-level log entries; only `console.warn` and `console.error` are sent as Sentry logs (`src/instrument.js`)
-- Dashboard: View Diff action now opens the preview modal on the Diff tab by default, while normal preview still opens Screenshot (`public/index.html`)
-- Compare: baseline lookup now filters by viewport dimensions (mobile, width, height) so a mobile comparison won't incorrectly match against a desktop baseline and vice versa (`src/routes/compare.js`)
+## v1.0.19 (2026-05-16)
+
+- Alerts: ping failure now only logs to `alert_runs` on the 5th consecutive failure (when auto-disabling); earlier failures just increment the counter silently; UI shows the error message (e.g. "https://example.com unreachable") instead of "Disabled" when the alert was auto-disabled due to consecutive failures; added `last_error_message` to GET /v1/alerts response (`src/alert-checker.js`, `src/routes/alerts.js`, `public/index.html`)
+- Alerts: added URL ping before each check — `checkAlerts()` and `processAlert()` now do a HEAD request before taking a screenshot; if the URL returns non-200 or is unreachable, the check is logged as a failed run with `error_message`, `consecutive_failures` is incremented, and the alert is automatically disabled after 5 consecutive failures; added `consecutive_failures` column to `alerts` table and `error_message` column to `alert_runs` table (`src/alert-checker.js`, `src/db/migrations/20250101000010_add_alert_consecutive_failures.js`)
+- Alerts: migrated alert checking to async BullMQ queue — `checkAlerts()` now enqueues jobs for due alerts with baselines instead of processing them synchronously; created `src/jobs/alert-check.js` queue and `src/workers/alert-checker.js` worker with concurrency 5, enabling parallel alert processing across multiple worker containers; baseline creation remains synchronous; added `alert-worker` service to docker-compose (`src/alert-checker.js`, `src/jobs/alert-check.js`, `src/workers/alert-checker.js`, `docker-compose.yaml`)
+- Dashboard: added colored status bar at the beginning of each alert row indicating last status (red=failed, green=ok, gray=disabled); updated GET /v1/alerts to include last run's triggered status (`public/index.html`, `src/routes/alerts.js`)
+- Alerts: auto-create baseline in alert checker when none exists, instead of logging "no baseline" and skipping (`src/alert-checker.js`)
+- Alerts: re-create baseline when URL, fullPage, mobile, width, or height changes via PUT endpoint; deletes old baseline and creates a fresh one (`src/routes/alerts.js`)
+- Dashboard: removed "Compare to baseline" checkbox, "Set Baseline" button on screenshot rows, and all associated code from Try It tab (`public/index.html`)
+- UI: added Norwegian translation for retention text "Lagres i {hours} timer, så slettes automatisk" (`public/index.html`)
+- Storage: images are now stored in `screenshots/{userId}/` subdirectories instead of all files flat in `screenshots/`; updated `saveFile` to accept a `userId` parameter and create subdirectories automatically; updated orphan cleanup to scan recursively (`src/services/storage.js`, `src/orphan-cleanup.js`)
+- Storage: added `userId` to async screenshot job data so the worker can save files in the correct user subdirectory (`src/routes/async.js`, `src/workers/renderer.js`)
+- Orphan cleanup: added `removeHiddenOrphans` to clean up hidden screenshots (baselines + alert-run screenshots) whose parent alert was deleted; catches the case where the alert is removed directly from the DB or where the delete handler misses records. Runs on startup and hourly (`src/orphan-cleanup.js`)
+- Alerts: added `alerts` table migration (`src/db/migrations/20250101000008_create_alerts.js`) for per-user URL+viewport monitoring
+- Alerts: added CRUD routes (`GET/POST/PUT/DELETE /v1/alerts`) in `src/routes/alerts.js` — create, list, update, and delete alert configurations
+- Alerts: added background checker `src/alert-checker.js` that runs every 60s, takes screenshots for due alerts, compares to baseline, and sends email if diff exceeds threshold
+- Alerts: added `sendAlertNotification` to `src/services/email.js` for alert-triggered email notifications
+- Alerts: added Alerts tab to dashboard (`public/index.html`) with create form (name, URL, interval, threshold, resolution), list with enable/disable/delete actions, and i18n strings for en/nb
+- App: mounted alerts routes and started alert checker in `src/app.js` and `src/index.js`
+- Alerts: added `alert_runs` table and `screenshots.hidden` column (`src/db/migrations/20250101000009_add_hidden_alert_runs.js`) — backfills existing baselines to hidden
+- Alerts: alert checker (`src/alert-checker.js`) saves triggered screenshots with `hidden: true` and diff image, logs every check to `alert_runs`, skips storage for non-triggered runs
+- Alerts: added `GET /v1/alerts/:id/runs` endpoint listing check history with screenshot references (`src/routes/alerts.js`)
+- Alerts: filtered hidden screenshots (baselines, alert checks) from `/v1/account/screenshots` list (`src/routes/account.js`)
+- Alerts: baselines created with `hidden: true` in screenshot POST, baseline-update, and alert baseline creation (`src/routes/screenshot.js`, `src/routes/alerts.js`)
+- Alerts: alert rows clickable in dashboard → opens runs modal with timestamp, diff %, triggered/OK status; triggered runs open comparison preview (`public/index.html`)
+- Alerts: added `POST /v1/alerts/:id/runs/:runId/set-baseline` to promote a run's screenshot to baseline, deleting old baselines and prior run screenshots (`src/routes/alerts.js`)
+- Alerts: "Set as Baseline" button in runs dialog, with confirm warning about prior screenshots being deleted (`public/index.html`)
+- Cleanup: added `src/orphan-cleanup.js` — removes screenshot DB records with missing API keys and their storage files; for local storage, scans for unreferenced files and deletes them. Runs on startup and hourly (`src/index.js`)

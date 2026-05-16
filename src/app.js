@@ -53,6 +53,7 @@ const { default: adminRouter } = await import('./routes/admin.js');
 const { default: compareRouter } = await import('./routes/compare.js');
 const { default: describeRouter } = await import('./routes/describe.js');
 const { default: sessionRouter } = await import('./routes/session.js');
+const { default: alertsRouter } = await import('./routes/alerts.js');
 
 app.use(healthRouter);
 app.use('/v1', authRouter);
@@ -65,6 +66,7 @@ app.use('/v1', adminRouter);
 app.use('/v1', compareRouter);
 app.use('/v1', describeRouter);
 app.use('/v1', sessionRouter);
+app.use('/v1', alertsRouter);
 
 Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);

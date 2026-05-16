@@ -55,4 +55,43 @@ describe('storage service (local disk)', () => {
     const fakePath = path.join(process.env.LOCAL_STORAGE_DIR, 'nonexistent-' + crypto.randomUUID() + '.txt');
     await expect(deleteFile(fakePath)).resolves.not.toThrow();
   });
+
+  it('saves a file in a userId subdirectory', async () => {
+    const userId = 'user-' + crypto.randomUUID();
+    const filename = 'test-' + crypto.randomUUID() + '.png';
+    const buffer = Buffer.from('user-specific-data');
+    const filePath = await saveFile(filename, buffer, userId);
+    const expected = path.join(process.env.LOCAL_STORAGE_DIR, userId, filename);
+    expect(filePath).toBe(expected);
+    const exists = await fs.access(expected).then(() => true).catch(() => false);
+    expect(exists).toBe(true);
+  });
+
+  it('saves multiple files for the same userId in the same subdirectory', async () => {
+    const userId = 'user-' + crypto.randomUUID();
+    const file1 = await saveFile('a-' + crypto.randomUUID() + '.txt', Buffer.from('a'), userId);
+    const file2 = await saveFile('b-' + crypto.randomUUID() + '.txt', Buffer.from('b'), userId);
+    expect(path.dirname(file1)).toBe(path.dirname(file2));
+    const exists1 = await fs.access(file1).then(() => true).catch(() => false);
+    const exists2 = await fs.access(file2).then(() => true).catch(() => false);
+    expect(exists1).toBe(true);
+    expect(exists2).toBe(true);
+  });
+
+  it('separates files for different userIds into different subdirectories', async () => {
+    const userA = 'user-a-' + crypto.randomUUID();
+    const userB = 'user-b-' + crypto.randomUUID();
+    const fileA = await saveFile('test.txt', Buffer.from('a'), userA);
+    const fileB = await saveFile('test.txt', Buffer.from('b'), userB);
+    expect(path.dirname(fileA)).not.toBe(path.dirname(fileB));
+  });
+
+  it('saves without userId in the base directory', async () => {
+    const filename = 'root-' + crypto.randomUUID() + '.txt';
+    const buffer = Buffer.from('root file');
+    const filePath = await saveFile(filename, buffer);
+    expect(path.dirname(filePath)).toBe(process.env.LOCAL_STORAGE_DIR);
+    const exists = await fs.access(filePath).then(() => true).catch(() => false);
+    expect(exists).toBe(true);
+  });
 });
