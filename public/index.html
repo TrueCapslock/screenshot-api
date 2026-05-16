@@ -852,7 +852,7 @@ function closePreview() {
   closeModal();
 }
 
-async function openPreview(id) {
+async function openPreview(id, preferredTab = 'screenshot') {
   const modal = document.getElementById('previewModal');
   const body = document.getElementById('modalBody');
   const tabs = document.getElementById('modalTabs');
@@ -902,11 +902,12 @@ async function openPreview(id) {
       return;
     }
 
-    tabs.innerHTML = tabDefs.map((t, i) =>
-      `<button class="modal-tab${i === 0 ? ' active' : ''}" data-tab="${t.id}" onclick="switchModalTab('${t.id}')">${t.label}</button>`
+    const activeTab = tabDefs.some(t => t.id === preferredTab) ? preferredTab : tabDefs[0].id;
+    tabs.innerHTML = tabDefs.map(t =>
+      `<button class="modal-tab${t.id === activeTab ? ' active' : ''}" data-tab="${t.id}" onclick="switchModalTab('${t.id}')">${t.label}</button>`
     ).join('');
 
-    showModalTab(tabDefs[0].id);
+    showModalTab(activeTab);
   } catch {
     body.innerHTML = '<p style="color:var(--text-danger);">Failed to load</p>';
   }
@@ -1004,11 +1005,11 @@ function initSlider() {
 }
 
 async function viewDiff(id) {
-  openPreview(id);
+  openPreview(id, 'diff');
 }
 
 async function previewScreenshot(id) {
-  openPreview(id);
+  openPreview(id, 'screenshot');
 }
 
 async function downloadScreenshot(id) {
@@ -1330,9 +1331,7 @@ async function testScreenshot() {
         const pctColor = pct > 0.1 ? '#dc3545' : '#28a745';
         result.innerHTML = `
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${t('capturedIn')} ${data.duration_ms}ms</p>
-          <p style="font-size:14px;margin-bottom:8px;">Diff: <span style="color:${pctColor};font-weight:700;">${pct}%</span> (${data.diff_pixels} of ${data.total_pixels} pixels)
-          <button onclick="describeDiff('${data.screenshot_id}', this)" style="margin-left:12px;font-size:12px;padding:2px 10px;" class="btn btn-secondary btn-sm">Describe</button></p>
-          <div id="describeResult" style="font-size:13px;color:var(--text-secondary);text-align:left;margin-top:4px;"></div>
+          <p style="font-size:14px;margin-bottom:8px;">Diff: <span style="color:${pctColor};font-weight:700;">${pct}%</span> (${data.diff_pixels} of ${data.total_pixels} pixels)</p>
         `;
         status.textContent = 'Baseline found — compared';
         status.style.color = '#28a745';

@@ -77,6 +77,9 @@ router.post('/compare', auth, rateLimit, logUsage, async (req, res) => {
         'screenshots.is_baseline': true,
       })
       .whereNotNull('screenshots.storage_path')
+      .whereRaw("(screenshots.options->>'mobile')::boolean = ?", [!!options.mobile])
+      .whereRaw("COALESCE((screenshots.options->>'width')::int, 1280) = ?", [viewportWidth])
+      .whereRaw("COALESCE((screenshots.options->>'height')::int, 720) = ?", [viewportHeight])
       .orderBy('screenshots.created_at', 'desc')
       .select('screenshots.id', 'screenshots.storage_path')
       .first();
@@ -177,12 +180,16 @@ router.get('/screenshot/:id/baseline', auth, async (req, res) => {
   const screenshot = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
     .where({ 'screenshots.id': req.params.id, 'api_keys.user_id': req.apiKey.userId })
-    .select('screenshots.url')
+    .select('screenshots.url', 'screenshots.options')
     .first();
 
   if (!screenshot) {
     return res.status(404).json({ error: 'not_found', message: 'Screenshot not found' });
   }
+
+  const opts = typeof screenshot.options === 'string' ? JSON.parse(screenshot.options) : screenshot.options || {};
+  const viewportWidth = opts.mobile ? 390 : opts.width || 1280;
+  const viewportHeight = opts.mobile ? 844 : opts.height || 720;
 
   const baseline = await db('screenshots')
     .join('api_keys', 'screenshots.api_key_id', 'api_keys.id')
@@ -192,6 +199,9 @@ router.get('/screenshot/:id/baseline', auth, async (req, res) => {
       'screenshots.is_baseline': true,
     })
     .whereNotNull('screenshots.storage_path')
+    .whereRaw("(screenshots.options->>'mobile')::boolean = ?", [!!opts.mobile])
+    .whereRaw("COALESCE((screenshots.options->>'width')::int, 1280) = ?", [viewportWidth])
+    .whereRaw("COALESCE((screenshots.options->>'height')::int, 720) = ?", [viewportHeight])
     .orderBy('screenshots.created_at', 'desc')
     .select('screenshots.storage_path', 'screenshots.format')
     .first();

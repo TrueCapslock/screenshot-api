@@ -52,6 +52,8 @@ export default {
   resendKey: process.env.RESEND_KEY || '',
 
   geminiApiKey: process.env.GEMINI_API_KEY || '',
+  aiProvider: process.env.AI_PROVIDER || 'gemini',
+  hfApiToken: process.env.HF_API_TOKEN || '',
 
   adminEmail: process.env.ADMIN_EMAIL || '',
 

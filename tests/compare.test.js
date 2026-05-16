@@ -6,6 +6,7 @@ const qb = vi.hoisted(() => {
     join: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     whereNotNull: vi.fn().mockReturnThis(),
+    whereRaw: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),

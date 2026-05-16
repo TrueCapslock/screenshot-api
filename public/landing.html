@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Screenshot API — Capture, Compare, Describe</title>
+<title lang="en">Screenshot API — Capture, Compare, Describe</title>
+<title lang="nb">Screenshot API — Ta, sammenlign, beskriv</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1a1a2e; background: #f8f9fc; line-height: 1.6; }
@@ -16,6 +17,9 @@
   .btn-primary:hover { background: #0052cc; transform: translateY(-1px); }
   .btn-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.3); }
   .btn-outline:hover { border-color: #fff; }
+  .btn-sm { font-size: .8rem; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,.3); background: transparent; color: #a0b4d0; cursor: pointer; }
+  .btn-sm:hover { border-color: #fff; color: #fff; }
+  .header-top { display:flex;align-items:center;justify-content:flex-end;margin-bottom:40px; }
   .cta-buttons { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   section { padding: 64px 0; }
   section h2 { font-size: 1.8rem; font-weight: 700; text-align: center; margin-bottom: 40px; }
@@ -45,6 +49,7 @@
   .code-snippet { background: #1a1a2e; color: #a0d0ff; border-radius: 8px; padding: 20px 24px; font-family: "SF Mono","Fira Code",monospace; font-size: .85rem; overflow-x: auto; }
   .code-snippet .comment { color: #6a8aae; }
   footer { text-align: center; padding: 32px 0; font-size: .85rem; color: #999; border-top: 1px solid #e8e8e8; }
+  .lang-nb { display:none; }
   @media (max-width: 600px) { header h1 { font-size: 2rem; } header { padding: 40px 0 60px; } }
 </style>
 </head>
@@ -52,33 +57,46 @@
 
 <header>
   <div class="container">
+    <div class="header-top">
+      <button class="btn-sm" onclick="toggleLang()" id="langBtn">Norsk</button>
+    </div>
     <h1>Screenshot API</h1>
-    <p>Capture screenshots of any web page or render HTML to an image. Compare against baselines, detect visual diffs, and describe changes with AI — all through a simple REST API.</p>
+    <p class="lang-en">Capture screenshots of any web page or render HTML to an image. Compare against baselines, detect visual diffs, and describe changes with AI — all through a simple REST API.</p>
+    <p class="lang-nb">Ta skjermbilder av alle nettsider eller render HTML til bilde. Sammenlign med referansebilder, oppdag visuelle forskjeller og beskriv endringer med AI — alt via et enkelt REST API.</p>
     <div class="cta-buttons">
-      <a href="/docs" class="btn btn-primary">Go to Dashboard</a>
-      <a href="/docs/api" class="btn btn-outline">API Documentation</a>
+      <a href="/docs" class="btn btn-primary lang-en">Go to Dashboard</a>
+      <a href="/docs" class="btn btn-primary lang-nb">Gå til dashbord</a>
+      <a href="/docs/api" class="btn btn-outline lang-en">API Documentation</a>
+      <a href="/docs/api" class="btn btn-outline lang-nb">API-dokumentasjon</a>
     </div>
   </div>
 </header>
 
 <section>
   <div class="container">
-    <h2>How It Works</h2>
+    <h2 class="lang-en">How It Works</h2>
+    <h2 class="lang-nb">Slik fungerer det</h2>
     <div class="steps">
       <div class="step">
         <div class="num">1</div>
-        <h3>Sign Up</h3>
-        <p>Create a free account and get your API key instantly.</p>
+        <h3 class="lang-en">Sign Up</h3>
+        <h3 class="lang-nb">Registrer deg</h3>
+        <p class="lang-en">Create a free account and get your API key instantly.</p>
+        <p class="lang-nb">Opprett en gratis konto og få din API-nøkkel med en gang.</p>
       </div>
       <div class="step">
         <div class="num">2</div>
-        <h3>Send a Request</h3>
-        <p><code>POST /v1/screenshot</code> with any URL. Options for viewport, format, full page, and more.</p>
+        <h3 class="lang-en">Send a Request</h3>
+        <h3 class="lang-nb">Send en forespørsel</h3>
+        <p class="lang-en"><code>POST /v1/screenshot</code> with any URL. Options for viewport, format, full page, and more.</p>
+        <p class="lang-nb"><code>POST /v1/screenshot</code> med en hvilken som helst URL. Velg visningsport, format, full side og mer.</p>
       </div>
       <div class="step">
         <div class="num">3</div>
-        <h3>Get the Image</h3>
-        <p>Receive a PNG, JPEG, or WebP screenshot — or queue async capture with a webhook callback.</p>
+        <h3 class="lang-en">Get the Image</h3>
+        <h3 class="lang-nb">Hent bildet</h3>
+        <p class="lang-en">Receive a PNG, JPEG, or WebP screenshot — or queue async capture with a webhook callback.</p>
+        <p class="lang-nb">Motta PNG-, JPEG- eller WebP-skjermbilde — eller legg i kø for asynkron fangst med webhook-kall.</p>
       </div>
     </div>
   </div>
@@ -86,37 +104,50 @@
 
 <section style="background:#fff;">
   <div class="container">
-    <h2>Features</h2>
+    <h2 class="lang-en">Features</h2>
+    <h2 class="lang-nb">Funksjoner</h2>
     <div class="features">
       <div class="feature">
         <div class="icon">&#x1F4F7;</div>
-        <h3>URL Screenshots</h3>
-        <p>Capture any publicly accessible URL. Supports custom viewport, mobile emulation, full-page capture, and dark mode.</p>
+        <h3 class="lang-en">URL Screenshots</h3>
+        <h3 class="lang-nb">URL-skjermbilder</h3>
+        <p class="lang-en">Capture any publicly accessible URL. Supports custom viewport, mobile emulation, full-page capture, and dark mode.</p>
+        <p class="lang-nb">Fang alle offentlig tilgjengelige URL-er. Støtter egendefinert visningsport, mobil-emulering, fullsidefangst og mørk modus.</p>
       </div>
       <div class="feature">
         <div class="icon">&#x1F4DD;</div>
-        <h3>HTML Rendering</h3>
-        <p>Render raw HTML markup to an image — no web server needed. Perfect for generating share cards, emails, or previews.</p>
+        <h3 class="lang-en">HTML Rendering</h3>
+        <h3 class="lang-nb">HTML-rendring</h3>
+        <p class="lang-en">Render raw HTML markup to an image — no web server needed. Perfect for generating share cards, emails, or previews.</p>
+        <p class="lang-nb">Render rå HTML-kode til bilde — ingen webserver nødvendig. Perfekt for delingskort, e-poster eller forhåndsvisninger.</p>
       </div>
       <div class="feature">
         <div class="icon">&#x1F504;</div>
-        <h3>Visual Comparison</h3>
-        <p>Compare screenshots against baselines with pixel-level diff detection. Get diff percentage, pixel count, and visual overlay.</p>
+        <h3 class="lang-en">Visual Comparison</h3>
+        <h3 class="lang-nb">Visuell sammenligning</h3>
+        <p class="lang-en">Compare screenshots against baselines with pixel-level diff detection. Get diff percentage, pixel count, and visual overlay.</p>
+        <p class="lang-nb">Sammenlign skjermbilder mot referansebilder med pikselnøyaktig diff-deteksjon. Får diff-prosent, pikselantall og visuelt overlay.</p>
       </div>
       <div class="feature">
         <div class="icon">&#x2728;</div>
-        <h3>AI Describe</h3>
-        <p>Let Google Gemini describe the visual differences between two screenshots in plain English (or Norwegian). Pro+ tier.</p>
+        <h3 class="lang-en">AI Describe</h3>
+        <h3 class="lang-nb">AI-beskrivelse</h3>
+        <p class="lang-en">AI-powered description of visual differences between two screenshots. Pro+ tier.</p>
+        <p class="lang-nb">AI-drevet beskrivelse av visuelle forskjeller mellom to skjermbilder. Pro+ nivå.</p>
       </div>
       <div class="feature">
         <div class="icon">&#x26A1;</div>
-        <h3>Async Capture</h3>
-        <p>Queue screenshots via BullMQ for non-blocking capture. Poll for results or receive a webhook when complete.</p>
+        <h3 class="lang-en">Async Capture</h3>
+        <h3 class="lang-nb">Asynkron fangst</h3>
+        <p class="lang-en">Queue screenshots via BullMQ for non-blocking capture. Poll for results or receive a webhook when complete.</p>
+        <p class="lang-nb">Legg skjermbilder i kø via BullMQ for ikke-blokkerende fangst. Hent resultater eller motta webhook når ferdig.</p>
       </div>
       <div class="feature">
         <div class="icon">&#x1F512;</div>
-        <h3>API Key Auth</h3>
-        <p>Secure bcrypt-hashed API keys with tier-based rate limiting and monthly usage quotas. Stripe subscription billing.</p>
+        <h3 class="lang-en">API Key Auth</h3>
+        <h3 class="lang-nb">API-nøkkel-autentisering</h3>
+        <p class="lang-en">Secure bcrypt-hashed API keys with tier-based rate limiting and monthly usage quotas. Stripe subscription billing.</p>
+        <p class="lang-nb">Sikre bcrypt-hashede API-nøkler med nivåbasert rate-begrensning og månedlige kvoter. Stripe-abonnementsfakturering.</p>
       </div>
     </div>
   </div>
@@ -124,15 +155,18 @@
 
 <section>
   <div class="container">
-    <h2>Quick Start</h2>
+    <h2 class="lang-en">Quick Start</h2>
+    <h2 class="lang-nb">Hurtigstart</h2>
     <div class="code-snippet">
-      <span class="comment"># Capture a screenshot</span><br>
+      <span class="comment lang-en"># Capture a screenshot</span>
+      <span class="comment lang-nb"># Ta et skjermbilde</span><br>
       curl -X POST https://screenshots.hartvig.info/v1/screenshot \<br>
       &nbsp;&nbsp;-H "x-api-key: sk_your_key_here" \<br>
       &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
       &nbsp;&nbsp;-d '{"url":"https://example.com","format":"png","fullPage":true}' \<br>
       &nbsp;&nbsp;-o screenshot.png<br><br>
-      <span class="comment"># Compare against a baseline</span><br>
+      <span class="comment lang-en"># Compare against a baseline</span>
+      <span class="comment lang-nb"># Sammenlign med et referansebilde</span><br>
       curl -X POST https://screenshots.hartvig.info/v1/compare \<br>
       &nbsp;&nbsp;-H "x-api-key: sk_your_key_here" \<br>
       &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
@@ -143,52 +177,74 @@
 
 <section style="background:#fff;">
   <div class="container">
-    <h2>Plans</h2>
+    <h2 class="lang-en">Plans</h2>
+    <h2 class="lang-nb">Prisplaner</h2>
     <div class="pricing">
       <div class="plan">
-        <h3>Free</h3>
+        <h3 class="lang-en">Free</h3>
+        <h3 class="lang-nb">Gratis</h3>
         <div class="price">$0</div>
-        <div class="per">/month</div>
+        <div class="per lang-en">/month</div>
+        <div class="per lang-nb">/mnd</div>
         <ul>
-          <li>10 screenshots</li>
-          <li>5 req/min</li>
-          <li>Basic capture</li>
+          <li class="lang-en">10 screenshots</li>
+          <li class="lang-nb">10 skjermbilder</li>
+          <li class="lang-en">5 req/min</li>
+          <li class="lang-nb">5 forespørsler/min</li>
+          <li class="lang-en">Basic capture</li>
+          <li class="lang-nb">Grunnleggende fangst</li>
         </ul>
-        <a href="/docs" class="btn btn-outline" style="border-color:#ddd;color:#333;">Get Started</a>
+        <a href="/docs" class="btn btn-outline lang-en" style="border-color:#ddd;color:#333;">Get Started</a>
+        <a href="/docs" class="btn btn-outline lang-nb" style="border-color:#ddd;color:#333;">Kom i gang</a>
       </div>
       <div class="plan">
         <h3>Starter</h3>
         <div class="price">$9</div>
-        <div class="per">/month</div>
+        <div class="per lang-en">/month</div>
+        <div class="per lang-nb">/mnd</div>
         <ul>
-          <li>500 screenshots</li>
-          <li>60 req/min</li>
-          <li>Higher limits</li>
+          <li class="lang-en">500 screenshots</li>
+          <li class="lang-nb">500 skjermbilder</li>
+          <li class="lang-en">60 req/min</li>
+          <li class="lang-nb">60 forespørsler/min</li>
+          <li class="lang-en">Higher limits</li>
+          <li class="lang-nb">Høyere grenser</li>
         </ul>
-        <a href="/docs" class="btn btn-primary">Subscribe</a>
+        <a href="/docs" class="btn btn-primary lang-en">Subscribe</a>
+        <a href="/docs" class="btn btn-primary lang-nb">Abonner</a>
       </div>
       <div class="plan popular">
-        <div class="ribbon"><span>POPULAR</span></div>
+        <div class="ribbon"><span class="lang-en">POPULAR</span><span class="lang-nb">POPULÆR</span></div>
         <h3>Pro</h3>
         <div class="price">$29</div>
-        <div class="per">/month</div>
+        <div class="per lang-en">/month</div>
+        <div class="per lang-nb">/mnd</div>
         <ul>
-          <li>2,500 screenshots</li>
-          <li>250 req/min</li>
-          <li>Comparison &amp; AI Describe</li>
+          <li class="lang-en">2,500 screenshots</li>
+          <li class="lang-nb">2 500 skjermbilder</li>
+          <li class="lang-en">250 req/min</li>
+          <li class="lang-nb">250 forespørsler/min</li>
+          <li class="lang-en">Comparison &amp; AI Describe</li>
+          <li class="lang-nb">Sammenligning &amp; AI-beskrivelse</li>
         </ul>
-        <a href="/docs" class="btn btn-primary">Subscribe</a>
+        <a href="/docs" class="btn btn-primary lang-en">Subscribe</a>
+        <a href="/docs" class="btn btn-primary lang-nb">Abonner</a>
       </div>
       <div class="plan">
         <h3>Business</h3>
         <div class="price">$99</div>
-        <div class="per">/month</div>
+        <div class="per lang-en">/month</div>
+        <div class="per lang-nb">/mnd</div>
         <ul>
-          <li>15,000 screenshots</li>
-          <li>1,000 req/min</li>
-          <li>Everything</li>
+          <li class="lang-en">15,000 screenshots</li>
+          <li class="lang-nb">15 000 skjermbilder</li>
+          <li class="lang-en">1,000 req/min</li>
+          <li class="lang-nb">1 000 forespørsler/min</li>
+          <li class="lang-en">Everything</li>
+          <li class="lang-nb">Alt</li>
         </ul>
-        <a href="/docs" class="btn btn-primary">Subscribe</a>
+        <a href="/docs" class="btn btn-primary lang-en">Subscribe</a>
+        <a href="/docs" class="btn btn-primary lang-nb">Abonner</a>
       </div>
     </div>
   </div>
@@ -196,17 +252,46 @@
 
 <section>
   <div class="container" style="text-align:center;">
-    <h2>Ready to get started?</h2>
-    <p style="color:#666;margin-bottom:24px;">Create your free account and get an API key in seconds.</p>
-    <a href="/docs" class="btn btn-primary" style="font-size:1.1rem;padding:14px 40px;">Go to Dashboard</a>
+    <h2 class="lang-en">Ready to get started?</h2>
+    <h2 class="lang-nb">Klar til å komme i gang?</h2>
+    <p class="lang-en" style="color:#666;margin-bottom:24px;">Create your free account and get an API key in seconds.</p>
+    <p class="lang-nb" style="color:#666;margin-bottom:24px;">Opprett en gratis konto og få en API-nøkkel på sekunder.</p>
+    <a href="/docs" class="btn btn-primary lang-en" style="font-size:1.1rem;padding:14px 40px;">Go to Dashboard</a>
+    <a href="/docs" class="btn btn-primary lang-nb" style="font-size:1.1rem;padding:14px 40px;">Gå til dashbord</a>
   </div>
 </section>
 
 <footer>
   <div class="container">
-    Screenshot API &mdash; <a href="/docs">Dashboard</a> &middot; <a href="/docs/api">API Docs</a>
+    Screenshot API &mdash; <a href="/docs" class="lang-en">Dashboard</a><a href="/docs" class="lang-nb">Dashbord</a> &middot; <a href="/docs/api" class="lang-en">API Docs</a><a href="/docs/api" class="lang-nb">API-dokumentasjon</a>
   </div>
 </footer>
+
+<script>
+(function() {
+  const lang = localStorage.getItem('lang') || 'en';
+  document.documentElement.lang = lang;
+  document.querySelectorAll('.lang-' + lang).forEach(el => el.style.display = '');
+  document.querySelectorAll('.lang-' + (lang === 'nb' ? 'en' : 'nb')).forEach(el => el.style.display = 'none');
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = lang === 'nb' ? 'English' : 'Norsk';
+})();
+
+function toggleLang() {
+  var current = document.documentElement.lang;
+  var next = current === 'nb' ? 'en' : 'nb';
+  document.documentElement.lang = next;
+  localStorage.setItem('lang', next);
+  document.querySelectorAll('.lang-en, .lang-nb').forEach(function(el) {
+    el.style.display = el.classList.contains('lang-' + next) ? '' : 'none';
+  });
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = next === 'nb' ? 'English' : 'Norsk';
+  document.querySelectorAll('title[lang]').forEach(function(el) {
+    el.style.display = el.getAttribute('lang') === next ? '' : 'none';
+  });
+}
+</script>
 
 </body>
 </html>
